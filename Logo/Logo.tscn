@@ -19,7 +19,7 @@ shader_param/line_thickness = 1.0
 
 [sub_resource type="ShaderMaterial" id=3]
 shader = ExtResource( 2 )
-shader_param/background_transparent = false
+shader_param/use_screen = true
 shader_param/color_1_from = Color( 0.25098, 0.25098, 0.25098, 1 )
 shader_param/color_1_to = Color( 0.521569, 0.133333, 0.454902, 1 )
 shader_param/color_2_from = Color( 0.12549, 0.12549, 0.12549, 1 )
