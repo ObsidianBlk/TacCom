@@ -1,0 +1,89 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Scenes/Region/Hexmap.gd" type="Script" id=1]
+[ext_resource path="res://Assets/Graphics/Hex.png" type="Texture" id=2]
+[ext_resource path="res://Scenes/Region/Region.gd" type="Script" id=3]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform bool use_screen = false;
+uniform vec4 color_1_from : hint_color = vec4(1);
+uniform vec4 color_1_to : hint_color = vec4(1);
+uniform vec4 color_2_from : hint_color = vec4(1);
+uniform vec4 color_2_to : hint_color = vec4(1);
+uniform vec4 color_3_from : hint_color = vec4(1);
+uniform vec4 color_3_to : hint_color = vec4(1);
+uniform vec4 color_4_from : hint_color = vec4(1);
+uniform vec4 color_4_to : hint_color = vec4(1);
+uniform vec4 color_5_from : hint_color = vec4(1);
+uniform vec4 color_5_to : hint_color = vec4(1);
+uniform vec4 color_6_from : hint_color = vec4(1);
+uniform vec4 color_6_to : hint_color = vec4(1);
+uniform vec4 color_7_from : hint_color = vec4(1);
+uniform vec4 color_7_to : hint_color = vec4(1);
+uniform vec4 color_8_from : hint_color = vec4(1);
+uniform vec4 color_8_to : hint_color = vec4(1);
+uniform float threshold = 0.05;
+
+
+void fragment(){
+	vec4 color = (use_screen) ? texture(SCREEN_TEXTURE, SCREEN_UV) : texture(TEXTURE, UV);
+
+	if (color.a > 0f){	
+		if (distance(color_1_from.rgb, color.rgb) < threshold){
+			color = color_1_to;
+		} else if (distance(color_2_from.rgb, color.rgb) < threshold){
+			color = color_2_to;
+		} else if (distance(color_3_from.rgb, color.rgb) < threshold){
+			color = color_3_to;
+		} else if (distance(color_4_from.rgb, color.rgb) < threshold){
+			color = color_4_to;
+		} else if (distance(color_5_from.rgb, color.rgb) < threshold){
+			color = color_5_to;
+		} else if (distance(color_6_from.rgb, color.rgb) < threshold){
+			color = color_6_to;
+		} else if (distance(color_7_from.rgb, color.rgb) < threshold){
+			color = color_7_to;
+		} else if (distance(color_8_from.rgb, color.rgb) < threshold){
+			color = color_8_to;
+		}
+	}
+
+	COLOR = color;
+}
+
+
+"
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/use_screen = false
+shader_param/color_1_from = Color( 0.25098, 0.25098, 0.25098, 1 )
+shader_param/color_1_to = Color( 0.372549, 0.541176, 0.356863, 1 )
+shader_param/color_2_from = Color( 0.376471, 0.376471, 0.376471, 1 )
+shader_param/color_2_to = Color( 0.278431, 0.411765, 0.235294, 0.431373 )
+shader_param/color_3_from = Color( 1, 1, 1, 1 )
+shader_param/color_3_to = Color( 1, 1, 1, 1 )
+shader_param/color_4_from = Color( 1, 1, 1, 1 )
+shader_param/color_4_to = Color( 1, 1, 1, 1 )
+shader_param/color_5_from = Color( 1, 1, 1, 1 )
+shader_param/color_5_to = Color( 1, 1, 1, 1 )
+shader_param/color_6_from = Color( 1, 1, 1, 1 )
+shader_param/color_6_to = Color( 1, 1, 1, 1 )
+shader_param/color_7_from = Color( 1, 1, 1, 1 )
+shader_param/color_7_to = Color( 1, 1, 1, 1 )
+shader_param/color_8_from = Color( 1, 1, 1, 1 )
+shader_param/color_8_to = Color( 1, 1, 1, 1 )
+shader_param/threshold = 0.01
+
+[node name="Region" type="Node2D"]
+script = ExtResource( 3 )
+columns = 10
+rows = 9
+
+[node name="Hexmap" type="Node2D" parent="."]
+material = SubResource( 2 )
+script = ExtResource( 1 )
+hex_image = ExtResource( 2 )
+offset = Vector2( 11, 4 )
