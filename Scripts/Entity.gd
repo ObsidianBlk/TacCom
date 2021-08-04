@@ -1,6 +1,5 @@
 extends Node2D
-tool
-class_name Region
+class_name Entity
 
 
 # -----------------------------------------------------------
@@ -11,54 +10,40 @@ class_name Region
 # -----------------------------------------------------------
 # Export Variables
 # -----------------------------------------------------------
-export var target_path : NodePath = ""		setget _set_target_path
-
+export var coord : Vector2 = Vector2.ZERO		setget set_coord
 
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
-var target : Node2D = null
-
+var hexmap_node : Hexmap = null
 
 # -----------------------------------------------------------
 # Onready Variables
 # -----------------------------------------------------------
-onready var hexmap_node : Hexmap = get_node("Hexmap")
-onready var camera_node : Camera2D = get_node("Camera")
 
 
 # -----------------------------------------------------------
 # Setters/Getters
 # -----------------------------------------------------------
-func _set_target_path(t : NodePath) -> void:
-	target_path = t
-	if target_path != "":
-		target = get_node(target_path)
+func set_coord(c : Vector2):
+	coord = Vector2(floor(c.x), floor(c.y))
+	if not hexmap_node:
+		var p = get_parent()
+		if p is Region:
+			hexmap_node = p.get_hexmap()
+	if hexmap_node:
+		print("Setting Coord")
+		position = hexmap_node.coord_to_world(coord)
 	else:
-		target = null
+		print("No Hexmap!")
+
 
 
 # -----------------------------------------------------------
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
-	pass
-
-func _process(_delta : float) -> void:
-	if Engine.editor_hint:
-		return
-	
-	var forceUpdate = false	
-	if target == null:
-		_set_target_path(target_path)
-		if not target:
-			return
-		camera_node.current = true
-		forceUpdate = true
-	if camera_node.position != target.position or forceUpdate:
-		print("setting Camera")
-		camera_node.position = target.position
-		hexmap_node.position = target.position
+	call_deferred("set_coord", coord)
 
 # -----------------------------------------------------------
 # "Private" Methods
@@ -68,12 +53,29 @@ func _process(_delta : float) -> void:
 # -----------------------------------------------------------
 # Methods
 # -----------------------------------------------------------
-func get_hexmap() -> Hexmap:
-	return hexmap_node
+
+
+func shift_by_degree(deg : float) -> void:
+	var odd = int(abs(coord.x)) % 2 == 1
+	var y_lu = 0 if odd else -1
+	var y_ld = 1 if odd else 0
+	var y_ru = 0 if odd else -1
+	var y_rd = 1 if odd else 0
+	
+	if (deg >= 330 and deg < 360) or (deg >= 0 and deg < 30):
+		set_coord(coord + Vector2(0, -1))
+	elif deg >= 30 and deg < 90:
+		set_coord(coord + Vector2(-1, y_lu))
+	elif deg >= 90 and deg < 150:
+		set_coord(coord + Vector2(-1, y_ld))
+	elif deg >= 150 and deg < 210:
+		set_coord(coord + Vector2(0, 1))
+	elif deg >= 210 and deg < 270:
+		set_coord(coord + Vector2(1, y_rd))
+	elif deg > 270 and deg < 330:
+		set_coord(coord + Vector2(1, y_ru))
 
 # -----------------------------------------------------------
 # Handler Methods
 # -----------------------------------------------------------
-
-
 

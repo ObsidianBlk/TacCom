@@ -1,5 +1,6 @@
 extends Node2D
 tool
+class_name Hexmap
 
 # -----------------------------------------------------------
 # Signals
@@ -17,6 +18,7 @@ export var centered : bool = true						setget _set_centered
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
+var ready = false
 var _cells = []
 var last_position = null
 
@@ -56,12 +58,16 @@ func _set_centered(c : bool) -> void:
 # -----------------------------------------------------------		
 
 func _ready() -> void:
+	ready = true
 	last_position = global_position
-	_CreateGrid()
+	if _cells.size() <= 0:
+		_CreateGrid()
+	
 
 func _process(_delta : float) -> void:
 	if global_position != last_position:
-		last_position = global_position	
+		last_position = global_position
+		#_UpdateGridOffset()
 
 
 
@@ -76,19 +82,28 @@ func _UpdateGridOffset() -> void:
 			pos -= (viewport_size * 0.5)
 		var shift = Vector2(
 			int(pos.x) % int(hex_offset.x),
-			int(pos.y) % int(hex_offset.y)
+			int(pos.y) % int(hex_offset.y * 2)
 		)
 		for cell in _cells:
-			var cpos = coord_to_world(cell.position) + shift
+			var cpos = coord_to_world(cell.position)
+			if cell.position == Vector2(0,0):
+				print("Cell Position: ", cpos, " | Map Position: ", position)
 			cell.sprite.position = cpos
 
 func _RemoveGrid() -> void:
+	if not ready:
+		return
+
 	_cells = []
 	for c in get_children():
 		remove_child(c)
-		c.queue_free()
+		c.call_deferred("queue_free")
+		#c.queue_free()
 
 func _CreateGrid() -> void:
+	if not ready:
+		return
+
 	_RemoveGrid()
 	var width = floor((viewport_size.x / hex_offset.x)) + 2
 	var height = floor((viewport_size.y / (hex_offset.y * 2)))
@@ -103,7 +118,7 @@ func _CreateGrid() -> void:
 				"position": Vector2(col, row),
 				"sprite": sprite
 			})
-			_UpdateGridOffset()
+	_UpdateGridOffset()
 
 
 # -----------------------------------------------------------
@@ -115,7 +130,16 @@ func map_to_world(c : int, r : int) -> Vector2:
 	var y = float(r) * (hex_offset.y*2)
 	if c % 2 != 0:
 		y += hex_offset.y
-	return Vector2(x,y)
+	var pos = Vector2(x,y)
+	if centered:
+		var cx = ceil((viewport_size.x / hex_offset.x) * 0.5)
+		var cy = floor((viewport_size.y / (hex_offset.y * 2)) * 0.5)
+		#print("CXY: ", Vector2(cx,cy))
+		var offset = Vector2(cx * hex_offset.x, cy * hex_offset.y)
+		#print("Centered Offset: ", offset)
+		pos -= offset
+		#print("CR: ", Vector2(c, r), " | Position: ", pos)
+	return pos
 
 func coord_to_world(coord : Vector2) -> Vector2:
 	return map_to_world(int(coord.x), int(coord.y))
