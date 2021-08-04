@@ -66,8 +66,7 @@ func _set_centered(c : bool) -> void:
 	if centered and viewport_size.x > 0 and viewport_size.y > 0 and hex_offset.x > 0 and hex_offset.y > 0:
 		var cx = ceil((viewport_size.x / hex_offset.x) * 0.5)
 		var cy = floor((viewport_size.y / (hex_offset.y * 2)) * 0.5)
-		print("CXY: ", Vector2(cx,cy))
-		_positional_offset = Vector2(cx * hex_offset.x, cy * (hex_offset.y*2))
+		_positional_offset = Vector2(cx * hex_offset.x, cy * (hex_offset.y*2) + hex_offset.y)
 	else:
 		_positional_offset = Vector2.ZERO
 	_UpdateGridOffset()
@@ -81,12 +80,12 @@ func _ready() -> void:
 	_set_centered(centered)
 	if _cells.size() <= 0:
 		_CreateGrid()
-	
 
 func _process(_delta : float) -> void:
 	if global_position != last_position:
 		last_position = global_position
 		_UpdateGridOffset()
+	update()
 
 
 
@@ -105,22 +104,16 @@ func _AssignColorToSprite(sprite : Sprite, color : Color) -> void:
 func _UpdateGridOffset() -> void:
 	if _cells.size() > 0:
 		for cell in _cells:
-			var cpos = coord_to_world(cell.coord)
-			#if cell.coord == Vector2(0,0):
-			#	print("Cell Position: ", cpos, " | Map Position: ", position)
-			cell.sprite.position = cpos
 			cell.global_coord = world_to_coord(cell.sprite.global_position)
-			if cell.coord == Vector2(0,0):
-				print("GP: ", position, " | Cell GC: ", cell.global_coord, " | Cell GP: ", cell.sprite.global_position)
-			if cell.global_coord.x < 0 or cell.global_coord.y < 0:
-				cell.sprite.visible = false
+			#if cell.global_coord.x < 0 or cell.global_coord.y < 0:
+			#	cell.sprite.visible = false
+			#else:
+			#	cell.sprite.visible = true
+			var key = "%sx%s"%[cell.global_coord.x, cell.global_coord.y]
+			if key in _highlight:
+				_AssignColorToSprite(cell.sprite, _highlight[key])
 			else:
-				cell.sprite.visible = true
-				var key = "%sx%s"%[cell.global_coord.x, cell.global_coord.y]
-				if key in _highlight:
-					_AssignColorToSprite(cell.sprite, _highlight[key])
-				else:
-					_AssignColorToSprite(cell.sprite, HEX_COLOR)
+				_AssignColorToSprite(cell.sprite, HEX_COLOR)
 
 func _RemoveGrid() -> void:
 	if not ready:
@@ -137,13 +130,16 @@ func _CreateGrid() -> void:
 		return
 
 	_RemoveGrid()
+	hex_image.get_width()
 	var width = floor((viewport_size.x / hex_offset.x)) + 2
-	var height = floor((viewport_size.y / (hex_offset.y * 2)))
-	for col in range(width):
-		for row in range(height):
+	var height = floor((viewport_size.y / (hex_offset.y * 2))) +2
+	#var width = floor(viewport_size.x / hex_image.get_width()) + 2
+	#var height = floor(viewport_size.y / hex_image.get_height()) + 2
+	for col in range(-1, width):
+		for row in range(-1, height):
 			var sprite = Sprite.new()
 			sprite.texture = hex_image
-			sprite.position = Vector2.ZERO #map_to_world(col, row)
+			sprite.position = map_to_world(col, row)
 			#sprite.use_parent_material = true
 			sprite.material = ShaderMaterial.new()
 			sprite.material.shader = preload("res://Shaders/Fragment/colorswap.shader")
@@ -208,7 +204,6 @@ func get_cells_at_distance(c : int, r : int, radius : int, inclusive : bool = fa
 	while ti < tagged.size():
 		var cell = tagged[ti]
 		if (cell.d < radius and inclusive) or (cell.d == radius):
-			print("Cell.d: ", cell.d, " | Radius: ", radius, " | Inclusive: ", inclusive)
 			cells.append(Vector2(cell.c, cell.r))
 		if cell.d < radius:
 			for e in EDGE.keys():
@@ -217,23 +212,9 @@ func get_cells_at_distance(c : int, r : int, radius : int, inclusive : bool = fa
 				if not key in handled:
 					tagged.append({"c":ncoord.x, "r":ncoord.y, "d": cell.d + 1})
 					handled[key] = cell.d + 1
-			#key = "%sx%s"%[cell.c-1, cell.r]
-			#if not key in handled:
-			#	tagged.append({"c":cell.c-1, "r":cell.r, "d": cell.d + 1})
-			#key = "%sx%s"%[cell.c-1, cell.r-1]
-			#if not key in handled:
-			#	tagged.append({"c":cell.c-1, "r":cell.r-1, "d": cell.d + 1})
-			#key = "%sx%s"%[cell.c, cell.r-1]
-			#if not key in handled:
-			#	tagged.append({"c":cell.c, "r":cell.r-1, "d": cell.d + 1})
-			#key = "%sx%s"%[cell.c+1, cell.r-1]
-			#if not key in handled:
-			#	tagged.append({"c":cell.c+1, "r":cell.r-1, "d": cell.d + 1})
-			#key = "%sx%s"%[cell.c+1, cell.r]
-			#if not key in handled:
-			#	tagged.append({"c":cell.c+1, "r":cell.r, "d": cell.d + 1})
 		ti += 1
 	return cells
+
 
 func map_to_world(c : int, r : int) -> Vector2:
 	var x = float(c) * hex_offset.x

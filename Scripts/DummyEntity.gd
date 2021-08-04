@@ -17,7 +17,7 @@ func _input(event) -> void:
 	if event.is_action_pressed("up_right"):
 		shift_by_degree(300)
 	if hexmap_node:
-		var coords = hexmap_node.get_cells_at_distance(int(coord.x), int(coord.y), 2)
+		var coords = hexmap_node.get_cells_at_distance(int(coord.x), int(coord.y), 1)
 		for c in coords:
 			hexmap_node.highlight_coord(c, Color(1,0,0))
 
