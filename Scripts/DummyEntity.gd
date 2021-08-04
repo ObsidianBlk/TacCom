@@ -2,6 +2,8 @@ extends "res://Scripts/Entity.gd"
 
 
 func _input(event) -> void:
+	if hexmap_node:
+		hexmap_node.clear_highlights()
 	if event.is_action_pressed("up"):
 		shift_by_degree(0)
 	if event.is_action_pressed("up_left"):
@@ -14,6 +16,10 @@ func _input(event) -> void:
 		shift_by_degree(240)
 	if event.is_action_pressed("up_right"):
 		shift_by_degree(300)
+	if hexmap_node:
+		var coords = hexmap_node.get_cells_at_distance(int(coord.x), int(coord.y), 2)
+		for c in coords:
+			hexmap_node.highlight_coord(c, Color(1,0,0))
 
 
 func _draw():

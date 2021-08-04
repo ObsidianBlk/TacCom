@@ -32,7 +32,7 @@ func set_coord(c : Vector2):
 		if p is Region:
 			hexmap_node = p.get_hexmap()
 	if hexmap_node:
-		print("Setting Coord")
+		#print("Setting Coord")
 		position = hexmap_node.coord_to_world(coord)
 	else:
 		print("No Hexmap!")
@@ -56,24 +56,18 @@ func _ready() -> void:
 
 
 func shift_by_degree(deg : float) -> void:
-	var odd = int(abs(coord.x)) % 2 == 1
-	var y_lu = 0 if odd else -1
-	var y_ld = 1 if odd else 0
-	var y_ru = 0 if odd else -1
-	var y_rd = 1 if odd else 0
-	
 	if (deg >= 330 and deg < 360) or (deg >= 0 and deg < 30):
-		set_coord(coord + Vector2(0, -1))
+		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.UP))
 	elif deg >= 30 and deg < 90:
-		set_coord(coord + Vector2(-1, y_lu))
+		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.LEFT_UP))
 	elif deg >= 90 and deg < 150:
-		set_coord(coord + Vector2(-1, y_ld))
+		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.LEFT_DOWN))
 	elif deg >= 150 and deg < 210:
-		set_coord(coord + Vector2(0, 1))
+		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.DOWN))
 	elif deg >= 210 and deg < 270:
-		set_coord(coord + Vector2(1, y_rd))
+		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.RIGHT_DOWN))
 	elif deg > 270 and deg < 330:
-		set_coord(coord + Vector2(1, y_ru))
+		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.RIGHT_UP))
 
 # -----------------------------------------------------------
 # Handler Methods

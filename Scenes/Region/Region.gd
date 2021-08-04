@@ -56,7 +56,7 @@ func _process(_delta : float) -> void:
 		camera_node.current = true
 		forceUpdate = true
 	if camera_node.position != target.position or forceUpdate:
-		print("setting Camera")
+		#print("setting Camera")
 		camera_node.position = target.position
 		hexmap_node.position = target.position
 
