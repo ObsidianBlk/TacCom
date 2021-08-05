@@ -32,11 +32,7 @@ func set_coord(c : Vector2):
 		if p is Region:
 			hexmap_node = p.get_hexmap()
 	if hexmap_node:
-		#print("Setting Coord")
 		position = hexmap_node.coord_to_world(coord)
-	else:
-		print("No Hexmap!")
-
 
 
 # -----------------------------------------------------------
@@ -53,21 +49,18 @@ func _ready() -> void:
 # -----------------------------------------------------------
 # Methods
 # -----------------------------------------------------------
+func end_turn() -> void:
+	pass # This should be overridden
+
+func set_hexmap(hexmap : Hexmap) -> void:
+	hexmap_node = hexmap
+	set_coord(coord)
 
 
-func shift_by_degree(deg : float) -> void:
-	if (deg >= 330 and deg < 360) or (deg >= 0 and deg < 30):
-		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.UP))
-	elif deg >= 30 and deg < 90:
-		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.LEFT_UP))
-	elif deg >= 90 and deg < 150:
-		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.LEFT_DOWN))
-	elif deg >= 150 and deg < 210:
-		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.DOWN))
-	elif deg >= 210 and deg < 270:
-		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.RIGHT_DOWN))
-	elif deg > 270 and deg < 330:
-		set_coord(hexmap_node.get_neighbor_coord(coord, Hexmap.EDGE.RIGHT_UP))
+func shift_to_edge(edge : int) -> void:
+	if hexmap_node:
+		set_coord(hexmap_node.get_neighbor_coord(coord, edge))
+
 
 # -----------------------------------------------------------
 # Handler Methods

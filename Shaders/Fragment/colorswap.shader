@@ -1,6 +1,7 @@
 shader_type canvas_item;
 
 uniform bool use_screen = false;
+uniform float alpha : hint_range(0.0, 1.0) = 1.0;
 uniform vec4 color_1_from : hint_color = vec4(1);
 uniform vec4 color_1_to : hint_color = vec4(1);
 uniform vec4 color_2_from : hint_color = vec4(1);
@@ -42,6 +43,7 @@ void fragment(){
 			color = color_8_to;
 		}
 	}
+	color.a *= alpha;
 
 	COLOR = color;
 }

@@ -12,7 +12,6 @@ class_name Hexmap
 # -----------------------------------------------------------
 const BASE_COLOR = Color("#404040")
 const ALIAS_COLOR = Color("#606060")
-const HEX_COLOR = Color(0,1,0.1)
 
 enum EDGE {UP=0, LEFT_UP=1, LEFT_DOWN=2, DOWN=3, RIGHT_DOWN=4, RIGHT_UP=5}
 
@@ -21,6 +20,7 @@ enum EDGE {UP=0, LEFT_UP=1, LEFT_DOWN=2, DOWN=3, RIGHT_DOWN=4, RIGHT_UP=5}
 # -----------------------------------------------------------
 export var hex_image : Texture							setget _set_hex_image
 export var hex_offset : Vector2 = Vector2.ZERO			setget _set_hex_offset
+export var hex_color : Color = Color(0,1,0.1)			setget _set_hex_color
 export var viewport_size : Vector2 = Vector2(64, 64)	setget _set_viewport_size
 export var centered : bool = true						setget _set_centered
 
@@ -52,6 +52,13 @@ func _set_hex_offset(o : Vector2) -> void:
 			_CreateGrid()
 		else:
 			_RemoveGrid()
+
+func _set_hex_color(c : Color) -> void:
+	hex_color = c
+	if _cells.size() > 0:
+		for cell in _cells:
+			if not ("%sx%s" % [cell.c, cell.r] in _highlight):
+				_AssignColorToSprite(cell.sprite, hex_color)
 
 func _set_viewport_size(v : Vector2) -> void:
 	if v.x >= 0 and v.y >= 0:
@@ -113,7 +120,7 @@ func _UpdateGridOffset() -> void:
 			if key in _highlight:
 				_AssignColorToSprite(cell.sprite, _highlight[key])
 			else:
-				_AssignColorToSprite(cell.sprite, HEX_COLOR)
+				_AssignColorToSprite(cell.sprite, hex_color)
 
 func _RemoveGrid() -> void:
 	if not ready:

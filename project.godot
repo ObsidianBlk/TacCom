@@ -23,11 +23,17 @@ _global_script_classes=[ {
 "class": "Region",
 "language": "GDScript",
 "path": "res://Scenes/Region/Region.gd"
+}, {
+"base": "Node2D",
+"class": "Ship",
+"language": "GDScript",
+"path": "res://Object/Ship/Ship.gd"
 } ]
 _global_script_class_icons={
 "Entity": "",
 "Hexmap": "",
-"Region": ""
+"Region": "",
+"Ship": ""
 }
 
 [application]
