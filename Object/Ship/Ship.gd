@@ -8,6 +8,12 @@ class_name Ship
 
 
 # -----------------------------------------------------------
+# Constants and Enums
+# -----------------------------------------------------------
+
+enum COMPARTMENT {FORE=0, MID=1, AFT=2}
+
+# -----------------------------------------------------------
 # Export Variables
 # -----------------------------------------------------------
 export var texture : Texture = null						setget _set_texture
@@ -49,17 +55,17 @@ func _set_tex_region_horizontal(e : bool) -> void:
 func _set_light_color(c : Color) -> void:
 	light_color = c
 	if sprite:
-		sprite.material.set_param_value("color_3_to", light_color)
+		sprite.material.set_shader_param("color_3_to", light_color)
 
 func _set_mid_color(c : Color) -> void:
 	mid_color = c
 	if sprite:
-		sprite.material.set_param_value("color_1_to", mid_color)
+		sprite.material.set_shader_param("color_1_to", mid_color)
 
 func _set_dark_color(c : Color) -> void:
 	dark_color = c
 	if sprite:
-		sprite.material.set_param_value("color_2_to", dark_color)
+		sprite.material.set_shader_param("color_2_to", dark_color)
 
 func set_facing(f : float) -> void:
 	if f < 0:
@@ -73,7 +79,12 @@ func set_facing(f : float) -> void:
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
-	pass
+	if sprite:
+		sprite.texture = texture
+		sprite.material.set_shader_param("color_3_to", light_color)
+		sprite.material.set_shader_param("color_1_to", mid_color)
+		sprite.material.set_shader_param("color_2_to", dark_color)
+		_swapFacing(facing_edge())
 
 # -----------------------------------------------------------
 # Private Methods

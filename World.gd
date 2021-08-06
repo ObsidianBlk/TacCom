@@ -1,6 +1,6 @@
 extends Node2D
 
-onready var logo_node = get_node("Logo")
+onready var logo_node = get_node_or_null("Logo")
 
 func _on_logo_complete() -> void:
 	remove_child(logo_node)

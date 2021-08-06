@@ -33,7 +33,7 @@ onready var camera_node : Camera2D = get_node("Camera")
 func _set_target_path(t : NodePath) -> void:
 	target_path = t
 	if target_path != "":
-		target = get_node(target_path)
+		target = get_node_or_null(target_path)
 	else:
 		target = null
 
