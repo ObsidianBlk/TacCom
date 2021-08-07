@@ -5,8 +5,6 @@ class_name ShipComponent
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-signal damage_taken(component)
-signal destroyed(component)
 
 
 # -----------------------------------------------------------
@@ -17,14 +15,31 @@ signal destroyed(component)
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
+var _initialized = false
+var _connections = []
 var _max_structure : float = 100
 var _structure : float = 100
-var _crew_count : int = 0
 
 
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
+func init(info) -> bool:
+	if _initialized:
+		return false
+	
+	if "structure" in info:
+		_max_structure = info.structure
+		_structure = _max_structure
+	
+	_initialized = true
+	return true
+
+func connect_with(c : ShipComponent) -> void:
+	if _connections.find(c) < 0:
+		_connections.append(c)
+		c.connect_with(self)
+
 func set_structure(sp : float) -> void:
 	_structure = max(0, min(sp, _max_structure))
 
@@ -41,8 +56,6 @@ func set_max_structure(msp : float, adjust_sp : bool = false) -> void:
 	else:
 		_structure = min(_structure, _max_structure)
 
-func get_crew_count() -> int:
-	return _crew_count
 
 # -----------------------------------------------------------
 # Handler Methods

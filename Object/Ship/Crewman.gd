@@ -53,6 +53,11 @@ func health_rating() -> float:
 func alive() -> bool:
 	return _health > 0 and _wounds < 3
 
+func heartbeat() -> void:
+	if _radiation > 0:
+		var decrease = 10 * (float(_radiation) / 100)
+		_health = max(0, int(floor(float(_health) - decrease)))
+
 func hazard(dmg : float, rads : float) -> void:
 	if not alive():
 		return

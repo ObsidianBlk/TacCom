@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/Font_6x6.png-ac32a4cec341a16b7fa2fcce81690b3d.stex"
+path="res://.import/TacCom_6x6.png-e231d556448fc87868f43615ca1fd042.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Fonts/F6x6/Font_6x6.png"
-dest_files=[ "res://.import/Font_6x6.png-ac32a4cec341a16b7fa2fcce81690b3d.stex" ]
+source_file="res://Assets/Fonts/TacCom6x6/TacCom_6x6.png"
+dest_files=[ "res://.import/TacCom_6x6.png-e231d556448fc87868f43615ca1fd042.stex" ]
 
 [params]
 
