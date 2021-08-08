@@ -16,6 +16,7 @@ enum COMPARTMENT {FORE=0, MID=1, AFT=2}
 # -----------------------------------------------------------
 # Export Variables
 # -----------------------------------------------------------
+export var faction : String = "NEUTRAL"					setget _set_faction
 export var texture : Texture = null						setget _set_texture
 export var tex_region_size : Vector2 = Vector2(16, 16)	setget _set_tex_region_size
 export var tex_region_horizontal : bool = true			setget _set_tex_region_horizontal
@@ -28,6 +29,7 @@ export (float, 0.0, 360.0) var facing = 0.0		setget set_facing
 # Variables
 # -----------------------------------------------------------
 
+var sprite : Sprite = null
 var fore_structure : ShipComponent = null
 var mid_structure : ShipComponent = null
 var aft_structure : ShipComponent
@@ -35,12 +37,21 @@ var aft_structure : ShipComponent
 # -----------------------------------------------------------
 # Onready Variables
 # -----------------------------------------------------------
-onready var sprite = get_node("Sprite")
 
 
 # -----------------------------------------------------------
 # Setters/Getters
 # -----------------------------------------------------------
+func _set_faction(f : String, force : bool = true) -> void:
+	if f != "" and (f != faction or force):
+		if faction != "":
+			remove_from_group(faction)
+		add_to_group(f)
+	elif f == "" and faction != "":
+		remove_from_group(faction)
+	faction = f
+
+
 func _set_texture(t : Texture) -> void:
 	texture = t
 	if sprite:
@@ -83,13 +94,17 @@ func set_facing(f : float) -> void:
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
+	print("Ship Ready")
+	sprite = get_node("Sprite")
 	if sprite:
+		print("Setting Sprite Up")
 		sprite.texture = texture
 		sprite.material.set_shader_param("color_3_to", light_color)
 		sprite.material.set_shader_param("color_1_to", mid_color)
 		sprite.material.set_shader_param("color_2_to", dark_color)
 		_swapFacing(facing_edge())
 	
+	_set_faction(faction, true)
 	var struct_info = {
 		"structure":30,
 		"defense":[30,0,10]
@@ -99,6 +114,10 @@ func _ready() -> void:
 	aft_structure = ShipComponent.new(struct_info)
 	mid_structure.connect_to(fore_structure, true)
 	mid_structure.connect_to(aft_structure, true)
+
+func _enter_tree():
+	print("Added to Tree")
+	
 
 # -----------------------------------------------------------
 # Private Methods

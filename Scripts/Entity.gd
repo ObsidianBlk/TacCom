@@ -27,10 +27,6 @@ var hexmap_node : Hexmap = null
 # -----------------------------------------------------------
 func set_coord(c : Vector2):
 	coord = Vector2(floor(c.x), floor(c.y))
-	if not hexmap_node:
-		var p = get_parent()
-		if p is Region:
-			hexmap_node = p.get_hexmap()
 	if hexmap_node:
 		position = hexmap_node.coord_to_world(coord)
 
@@ -56,6 +52,9 @@ func set_hexmap(hexmap : Hexmap) -> void:
 	hexmap_node = hexmap
 	set_coord(coord)
 
+func clear_hexmap() -> void:
+	hexmap_node = null
+
 
 func shift_to_edge(edge : int) -> void:
 	if hexmap_node:
@@ -65,4 +64,6 @@ func shift_to_edge(edge : int) -> void:
 # -----------------------------------------------------------
 # Handler Methods
 # -----------------------------------------------------------
-
+func _on_hexmap(hm : Hexmap) -> void:
+	if not hexmap_node:
+		hexmap_node = hm
