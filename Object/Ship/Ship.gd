@@ -28,6 +28,10 @@ export (float, 0.0, 360.0) var facing = 0.0		setget set_facing
 # Variables
 # -----------------------------------------------------------
 
+var fore_structure : ShipComponent = null
+var mid_structure : ShipComponent = null
+var aft_structure : ShipComponent
+
 # -----------------------------------------------------------
 # Onready Variables
 # -----------------------------------------------------------
@@ -85,6 +89,16 @@ func _ready() -> void:
 		sprite.material.set_shader_param("color_1_to", mid_color)
 		sprite.material.set_shader_param("color_2_to", dark_color)
 		_swapFacing(facing_edge())
+	
+	var struct_info = {
+		"structure":30,
+		"defense":[30,0,10]
+	}
+	fore_structure = ShipComponent.new(struct_info)
+	mid_structure = ShipComponent.new(struct_info)
+	aft_structure = ShipComponent.new(struct_info)
+	mid_structure.connect_to(fore_structure, true)
+	mid_structure.connect_to(aft_structure, true)
 
 # -----------------------------------------------------------
 # Private Methods

@@ -13,19 +13,19 @@ var _max_power : int = 4
 var _available_power : int = 4
 var _reserved = {}
 
+# -----------------------------------------------------------
+# Override Methods
+# -----------------------------------------------------------
 
-# -----------------------------------------------------------
-# Public Methods
-# -----------------------------------------------------------
-func init(info) -> bool:
-	if not .init(info):
-		return false
-	
+func _init(info : Dictionary).(info) -> void:
 	if "power" in info:
 		_max_power = info.power
 		_available_power = _max_power
 		emit_signal("power_change", _available_power, _max_power)
-	return true
+
+# -----------------------------------------------------------
+# Public Methods
+# -----------------------------------------------------------
 
 
 func request_power(requester : String, amount : int) -> int:
