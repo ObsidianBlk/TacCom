@@ -7,6 +7,8 @@ class_name Region
 # Signals
 # -----------------------------------------------------------
 signal hexmap(hm)
+signal ship_added(ship)
+signal ship_removed(ship)
 
 # -----------------------------------------------------------
 # Export Variables
@@ -55,7 +57,7 @@ func _process(_delta : float) -> void:
 # "Private" Methods
 # -----------------------------------------------------------
 
-func _add_entity(ent : Entity, ent_container : Node2D) -> void:
+func _add_entity(ent : Entity, ent_container : Node2D, signal_name : String = "") -> void:
 	var ent_parent = ent.get_parent()
 	if ent_parent == ent_container:
 		return
@@ -63,12 +65,15 @@ func _add_entity(ent : Entity, ent_container : Node2D) -> void:
 		ent_parent.remove_child(ent)
 	ent_container.add_child(ent)
 	ent.set_hexmap(hexmap_node)
+	if signal_name != "":
+		emit_signal(signal_name, ent)
 
-func _remove_entity(ent : Entity, ent_container : Node2D) -> void:
+func _remove_entity(ent : Entity, ent_container : Node2D, signal_name : String = "") -> void:
 	var ent_parent = ent.get_parent()
 	if ent_parent == ent_container:
 		ent_parent.remove_child(ent)
 		ent.clear_hexmap()
+		emit_signal(signal_name, ent)
 
 # -----------------------------------------------------------
 # Methods
@@ -85,10 +90,10 @@ func set_target_node(target) -> void:
 		camera_node.current = true
 
 func add_ship(ship : Ship) -> void:
-	_add_entity(ship, ship_container)
+	_add_entity(ship, ship_container, "ship_added")
 
 func remove_ship(ship : Ship) -> void:
-	_remove_entity(ship, ship_container)
+	_remove_entity(ship, ship_container, "ship_removed")
 
 func add_env(env : Entity) -> void:
 	_add_entity(env, env_container)
@@ -98,9 +103,10 @@ func remove_env(env : Entity) -> void:
 
 func get_ships_in_faction(faction_name : String) -> Array:
 	var sig = []
-	for ship in ship_container.get_children():
-		if ship.is_in_group(faction_name):
-			sig.append(ship)
+	if ship_container:
+		for ship in ship_container.get_children():
+			if ship.is_in_group(faction_name):
+				sig.append(ship)
 	return sig
 
 # -----------------------------------------------------------

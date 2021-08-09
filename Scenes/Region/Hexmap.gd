@@ -162,7 +162,7 @@ func _CreateGrid() -> void:
 		return
 
 	_RemoveGrid()
-	hex_image.get_width()
+	#hex_image.get_width()
 	var width = floor((viewport_size.x / hex_offset.x)) + 2
 	var height = floor((viewport_size.y / (hex_offset.y * 2))) +2
 	#var width = floor(viewport_size.x / hex_image.get_width()) + 2

@@ -35,7 +35,7 @@ func set_coord(c : Vector2):
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
-	call_deferred("set_coord", coord)
+	pass
 
 # -----------------------------------------------------------
 # "Private" Methods

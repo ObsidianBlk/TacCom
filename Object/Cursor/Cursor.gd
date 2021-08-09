@@ -45,7 +45,6 @@ func _ready() -> void:
 	set_process_unhandled_input(false)
 
 func _unhandled_input(event):
-	print("Cursor Input")
 	if event.is_action_pressed("up", false):
 		shift_to_edge(Hexmap.EDGE.UP)
 	if event.is_action_pressed("up_left", false):
@@ -92,5 +91,4 @@ func _on_freelook(c : Vector2) -> void:
 	visible = true
 	var parent = get_parent()
 	if parent is Region:
-		print("Cursor Parent is Region")
 		parent.set_target_node(self)

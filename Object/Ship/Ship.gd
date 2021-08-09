@@ -5,7 +5,7 @@ class_name Ship
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-
+signal turn_complete
 
 # -----------------------------------------------------------
 # Constants and Enums
@@ -44,10 +44,10 @@ var aft_structure : ShipComponent
 # -----------------------------------------------------------
 func _set_faction(f : String, force : bool = true) -> void:
 	if f != "" and (f != faction or force):
-		if faction != "":
+		if faction != "" and is_in_group(faction):
 			remove_from_group(faction)
 		add_to_group(f)
-	elif f == "" and faction != "":
+	elif f == "" and faction != "" and is_in_group(faction):
 		remove_from_group(faction)
 	faction = f
 
@@ -94,10 +94,8 @@ func set_facing(f : float) -> void:
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
-	print("Ship Ready")
 	sprite = get_node("Sprite")
 	if sprite:
-		print("Setting Sprite Up")
 		sprite.texture = texture
 		sprite.material.set_shader_param("color_3_to", light_color)
 		sprite.material.set_shader_param("color_1_to", mid_color)
@@ -115,8 +113,6 @@ func _ready() -> void:
 	mid_structure.connect_to(fore_structure, true)
 	mid_structure.connect_to(aft_structure, true)
 
-func _enter_tree():
-	print("Added to Tree")
 	
 
 # -----------------------------------------------------------
@@ -171,6 +167,10 @@ func face_and_shift(deg : float, incremental : bool = false) -> void:
 	if hexmap_node:
 		set_facing(facing + deg if incremental else deg)
 		shift_to_facing()
+
+func process_turn() -> void:
+	pass
+
 
 # -----------------------------------------------------------
 # Handler Methods
