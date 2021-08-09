@@ -32,7 +32,7 @@ _global_script_classes=[ {
 "base": "ShipComponent",
 "class": "PoweredComponent",
 "language": "GDScript",
-"path": "res://PoweredComponent.gd"
+"path": "res://Object/Ship/Components/PoweredComponent.gd"
 }, {
 "base": "Reference",
 "class": "PriorityQueue",
@@ -53,6 +53,11 @@ _global_script_classes=[ {
 "class": "ShipComponent",
 "language": "GDScript",
 "path": "res://Object/Ship/Components/ShipComponent.gd"
+}, {
+"base": "PoweredComponent",
+"class": "SublightEngine",
+"language": "GDScript",
+"path": "res://Object/Ship/Components/SublightEngine.gd"
 } ]
 _global_script_class_icons={
 "Crewman": "",
@@ -63,7 +68,8 @@ _global_script_class_icons={
 "PriorityQueue": "",
 "Region": "",
 "Ship": "",
-"ShipComponent": ""
+"ShipComponent": "",
+"SublightEngine": ""
 }
 
 [application]

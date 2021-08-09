@@ -23,6 +23,7 @@ export var hex_offset : Vector2 = Vector2.ZERO			setget _set_hex_offset
 export var hex_color : Color = Color(0,1,0.1)			setget _set_hex_color
 export var viewport_size : Vector2 = Vector2(64, 64)	setget _set_viewport_size
 export var centered : bool = true						setget _set_centered
+export var bounds : Rect2 = Rect2(0,0,0,0)				setget _set_bounds
 
 # -----------------------------------------------------------
 # Variables
@@ -78,6 +79,10 @@ func _set_centered(c : bool) -> void:
 		_positional_offset = Vector2(cx * hex_offset.x, cy * (hex_offset.y*2) + hex_offset.y)
 	else:
 		_positional_offset = Vector2.ZERO
+	_UpdateGridOffset()
+
+func _set_bounds(b : Rect2) -> void:
+	bounds = b
 	_UpdateGridOffset()
 
 # -----------------------------------------------------------
@@ -137,15 +142,24 @@ func _UpdateGridOffset() -> void:
 	if _cell_grid.size() > 0:
 		for cell in _cell_grid:
 			cell.global_coord = world_to_coord(cell.sprite.global_position)
-			#if cell.global_coord.x < 0 or cell.global_coord.y < 0:
-			#	cell.sprite.visible = false
-			#else:
-			#	cell.sprite.visible = true
-			if cell.global_coord in _highlights:
-				_AssignColorToSprite(cell.sprite, _highlights[cell.global_coord], 1)
+			
+			# Check if cell is visible
+			if not _CoordInBounds(cell.global_coord):
+				cell.sprite.visible = false
 			else:
-				_AssignColorToSprite(cell.sprite, hex_color, 0)
+				cell.sprite.visible = true
+			
+			# If cell is visible, update it's coloring
+			if cell.sprite.visible:
+				if cell.global_coord in _highlights:
+					_AssignColorToSprite(cell.sprite, _highlights[cell.global_coord], 1)
+				else:
+					_AssignColorToSprite(cell.sprite, hex_color, 0)
 
+func _CoordInBounds(coord : Vector2) -> bool:
+	if bounds.size.x > 0 and bounds.size.y > 0:
+		return bounds.has_point(coord)
+	return true
 
 func _RemoveGrid() -> void:
 	if not ready:
@@ -188,7 +202,7 @@ func _CreateGrid() -> void:
 # Methods
 # -----------------------------------------------------------
 
-func get_neighbor_coord(coord : Vector2, edge : int) -> Vector2:
+func get_neighbor_coord(coord : Vector2, edge : int, ignore_blocked : bool = false) -> Vector2:
 	var odd = int(abs(coord.x)) % 2 == 1
 	var y_lu = 0 if odd else -1
 	var y_ld = 1 if odd else 0
@@ -197,17 +211,29 @@ func get_neighbor_coord(coord : Vector2, edge : int) -> Vector2:
 		
 	match(edge):
 		EDGE.UP:
-			return coord + Vector2(0, -1)
+			var nc = coord + Vector2(0, -1)
+			if not get_coord_blocked(nc) or ignore_blocked:
+				return nc
 		EDGE.LEFT_UP:
-			return coord + Vector2(-1, y_lu)
+			var nc = coord + Vector2(-1, y_lu)
+			if not get_coord_blocked(nc) or ignore_blocked:
+				return nc
 		EDGE.LEFT_DOWN:
-			return coord + Vector2(-1, y_ld)
+			var nc = coord + Vector2(-1, y_ld)
+			if not get_coord_blocked(nc) or ignore_blocked:
+				return nc
 		EDGE.DOWN:
-			return coord + Vector2(0, 1)
+			var nc = coord + Vector2(0, 1)
+			if not get_coord_blocked(nc) or ignore_blocked:
+				return nc
 		EDGE.RIGHT_DOWN:
-			return coord + Vector2(1, y_rd)
+			var nc = coord + Vector2(1, y_rd)
+			if not get_coord_blocked(nc) or ignore_blocked:
+				return nc
 		EDGE.RIGHT_UP:
-			return coord + Vector2(1, y_ru)
+			var nc = coord + Vector2(1, y_ru)
+			if not get_coord_blocked(nc) or ignore_blocked:
+				return nc
 	return coord
 
 func set_cell_weight(c : int, r : int, weight : float) -> void:
@@ -221,6 +247,12 @@ func set_cell_blocked(c : int, r : int, blocked : bool = true) -> void:
 
 func set_coord_blocked(coord : Vector2, blocked : bool = true) -> void:
 	set_cell_blocked(int(coord.x), int(coord.y), blocked)
+
+func get_cell_blocked(c : int, r : int) -> bool:
+	return not _CoordInBounds(Vector2(c, r)) or _GetCellInfo(Vector2(c, r), "blocked", false)
+
+func get_coord_blocked(coord : Vector2) -> bool:
+	return not _CoordInBounds(coord) or _GetCellInfo(coord, "blocked", false)
 
 func highlight_cell(c : int, r : int, color : Color, noupdate : bool = false) -> void:
 	_highlights[Vector2(c, r)] = color

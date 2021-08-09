@@ -20,6 +20,7 @@ shader_param/anim_scale = 0.01
 script = ExtResource( 2 )
 
 [node name="Region" parent="." instance=ExtResource( 1 )]
+bounds = Rect2( -10, -10, 100, 100 )
 
 [node name="PlayerCTRL" type="Node" parent="Region"]
 script = ExtResource( 3 )

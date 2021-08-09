@@ -13,7 +13,7 @@ signal ship_removed(ship)
 # -----------------------------------------------------------
 # Export Variables
 # -----------------------------------------------------------
-
+export var bounds : Rect2 = Rect2(0,0,0,0)		setget _set_bounds
 
 # -----------------------------------------------------------
 # Variables
@@ -34,13 +34,17 @@ onready var env_container : Node2D = get_node("Env")
 # -----------------------------------------------------------
 # Setters/Getters
 # -----------------------------------------------------------
-
+func _set_bounds(b: Rect2) -> void:
+	bounds = b
+	if hexmap_node:
+		hexmap_node.bounds = b
 
 # -----------------------------------------------------------
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
 	if hexmap_node:
+		hexmap_node.bounds = bounds
 		emit_signal("hexmap", hexmap_node)
 
 func _process(_delta : float) -> void:
