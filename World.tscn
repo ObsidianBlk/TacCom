@@ -1,11 +1,10 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Scenes/Region/Region.tscn" type="PackedScene" id=1]
 [ext_resource path="res://World.gd" type="Script" id=2]
-[ext_resource path="res://Scripts/PlayerCTRL.gd" type="Script" id=3]
 [ext_resource path="res://Shaders/Fragment/Starfield.shader" type="Shader" id=4]
 [ext_resource path="res://Object/Cursor/Cursor.tscn" type="PackedScene" id=5]
-[ext_resource path="res://Scenes/UI/ShipInfo/ShipInfo.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Scenes/UI/PlayerCTRL/PlayerCTRL.tscn" type="PackedScene" id=6]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 4 )
@@ -22,10 +21,6 @@ script = ExtResource( 2 )
 
 [node name="Region" parent="." instance=ExtResource( 1 )]
 bounds = Rect2( -10, -10, 100, 100 )
-
-[node name="PlayerCTRL" type="Node" parent="Region"]
-script = ExtResource( 3 )
-faction = "TAC"
 
 [node name="Cursor" parent="Region" instance=ExtResource( 5 )]
 
@@ -45,14 +40,11 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ShipInfo" parent="CanvasLayer" instance=ExtResource( 6 )]
+[node name="PlayerCTRL" parent="CanvasLayer" instance=ExtResource( 6 )]
+region_path = NodePath("../../Region")
+faction = "TAC"
 
-[connection signal="game_ready" from="." to="Region/PlayerCTRL" method="_on_game_ready"]
+[connection signal="game_ready" from="." to="CanvasLayer/PlayerCTRL" method="_on_game_ready"]
 [connection signal="hexmap" from="Region" to="Region/Cursor" method="_on_hexmap"]
-[connection signal="ship_added" from="Region" to="Region/PlayerCTRL" method="_on_ship_added"]
-[connection signal="engine_stats_change" from="Region/PlayerCTRL" to="CanvasLayer/ShipInfo" method="_on_engine_stats_change"]
-[connection signal="freelook" from="Region/PlayerCTRL" to="Region/Cursor" method="_on_freelook"]
-[connection signal="power_change" from="Region/PlayerCTRL" to="CanvasLayer/ShipInfo" method="_on_power_change"]
-[connection signal="structure_change" from="Region/PlayerCTRL" to="CanvasLayer/ShipInfo" method="_on_structure_change"]
-[connection signal="toggle_info" from="Region/PlayerCTRL" to="CanvasLayer/ShipInfo" method="_on_toggle_shipinfo"]
-[connection signal="freelook_exit" from="Region/Cursor" to="Region/PlayerCTRL" method="_on_freelook_exit"]
+[connection signal="freelook_exit" from="Region/Cursor" to="CanvasLayer/PlayerCTRL" method="_on_freelook_exit"]
+[connection signal="freelook" from="CanvasLayer/PlayerCTRL" to="Region/Cursor" method="_on_freelook"]

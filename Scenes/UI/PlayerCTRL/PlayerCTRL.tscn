@@ -1,0 +1,170 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Assets/TacCom.theme" type="Theme" id=1]
+[ext_resource path="res://Assets/Fonts/TacCom_WingDing6x6/TacCom_WingDing6x6.fnt" type="BitmapFont" id=2]
+[ext_resource path="res://Scenes/UI/PlayerCTRL/PlayerCTRL.gd" type="Script" id=3]
+
+[node name="PlayerCTRL" type="PanelContainer"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_min_size = Vector2( 64, 24 )
+theme = ExtResource( 1 )
+script = ExtResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tween" type="Tween" parent="."]
+
+[node name="HBC" type="HBoxContainer" parent="."]
+margin_left = 1.0
+margin_top = 2.0
+margin_right = 63.0
+margin_bottom = 22.0
+custom_constants/separation = 1
+
+[node name="Prev_Info" type="Button" parent="HBC"]
+margin_right = 8.0
+margin_bottom = 20.0
+text = "<"
+
+[node name="Info" type="VBoxContainer" parent="HBC"]
+margin_left = 9.0
+margin_right = 53.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+custom_constants/separation = -1
+
+[node name="Status" type="HBoxContainer" parent="HBC/Info"]
+margin_right = 44.0
+margin_bottom = 7.0
+custom_constants/separation = 0
+
+[node name="Label_Aft" type="Label" parent="HBC/Info/Status"]
+margin_right = 7.0
+margin_bottom = 7.0
+custom_fonts/font = ExtResource( 2 )
+text = "r"
+align = 1
+valign = 1
+
+[node name="Label_Mid" type="Label" parent="HBC/Info/Status"]
+margin_left = 7.0
+margin_right = 14.0
+margin_bottom = 7.0
+custom_fonts/font = ExtResource( 2 )
+text = "s"
+align = 1
+valign = 1
+
+[node name="Label_Fore" type="Label" parent="HBC/Info/Status"]
+margin_left = 14.0
+margin_right = 21.0
+margin_bottom = 7.0
+custom_fonts/font = ExtResource( 2 )
+text = "t"
+align = 1
+valign = 1
+
+[node name="Bar" type="ProgressBar" parent="HBC/Info/Status"]
+margin_left = 21.0
+margin_top = 2.0
+margin_right = 44.0
+margin_bottom = 4.0
+rect_min_size = Vector2( 0, 2 )
+size_flags_horizontal = 3
+size_flags_vertical = 4
+step = 1.0
+value = 25.0
+percent_visible = false
+
+[node name="HSeparator" type="HSeparator" parent="HBC/Info"]
+margin_top = 6.0
+margin_right = 44.0
+margin_bottom = 10.0
+
+[node name="Engines" type="HBoxContainer" parent="HBC/Info"]
+visible = false
+margin_left = -36.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+custom_constants/separation = 2
+
+[node name="Label" type="Label" parent="HBC/Info/Engines"]
+margin_top = 6.0
+margin_right = 7.0
+margin_bottom = 13.0
+custom_fonts/font = ExtResource( 2 )
+custom_colors/font_color = Color( 1, 0.901961, 0.364706, 1 )
+text = "e"
+
+[node name="Units" type="Label" parent="HBC/Info/Engines"]
+margin_left = 9.0
+margin_top = 6.0
+margin_right = 16.0
+margin_bottom = 13.0
+text = "0"
+
+[node name="Slash" type="Label" parent="HBC/Info/Engines"]
+margin_left = 18.0
+margin_top = 6.0
+margin_right = 22.0
+margin_bottom = 13.0
+custom_colors/font_color = Color( 0.301961, 0.301961, 0.301961, 1 )
+text = "/"
+
+[node name="Turns" type="Label" parent="HBC/Info/Engines"]
+margin_left = 24.0
+margin_top = 6.0
+margin_right = 31.0
+margin_bottom = 13.0
+text = "0"
+
+[node name="Power" type="HBoxContainer" parent="HBC/Info"]
+margin_top = 9.0
+margin_right = 44.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+custom_constants/separation = 2
+
+[node name="Label" type="Label" parent="HBC/Info/Power"]
+margin_right = 14.0
+margin_bottom = 7.0
+custom_fonts/font = ExtResource( 2 )
+custom_colors/font_color = Color( 1, 0.901961, 0.364706, 1 )
+text = "p "
+
+[node name="Available" type="Label" parent="HBC/Info/Power"]
+margin_left = 16.0
+margin_right = 23.0
+margin_bottom = 7.0
+text = "0"
+
+[node name="Slash" type="Label" parent="HBC/Info/Power"]
+margin_left = 25.0
+margin_right = 29.0
+margin_bottom = 7.0
+custom_colors/font_color = Color( 0.301961, 0.301961, 0.301961, 1 )
+text = "/"
+
+[node name="Maximum" type="Label" parent="HBC/Info/Power"]
+margin_left = 31.0
+margin_right = 38.0
+margin_bottom = 7.0
+text = "0"
+
+[node name="Commands" type="VBoxContainer" parent="HBC/Info"]
+visible = false
+margin_top = 15.0
+margin_right = 44.0
+margin_bottom = 15.0
+
+[node name="Next_Info" type="Button" parent="HBC"]
+margin_left = 54.0
+margin_right = 62.0
+margin_bottom = 20.0
+text = ">"
+
+[connection signal="pressed" from="HBC/Prev_Info" to="." method="_on_Prev_Info_pressed"]
+[connection signal="pressed" from="HBC/Next_Info" to="." method="_on_Next_Info_pressed"]

@@ -5,7 +5,7 @@ class_name ShipComponent
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-signal structure_changed(old_structure, new_structure, max_structure)
+signal structure_change(old_structure, new_structure, max_structure)
 
 
 # -----------------------------------------------------------
@@ -57,7 +57,7 @@ func _init(info : Dictionary) -> void:
 func connect_to(c : ShipComponent, bidirectional : bool = false) -> void:
 	if _connections.find(c) < 0:
 		_connections.put(c.get_priority(), c)
-		c.connect("structure_changed", self, "_on_connected_structure_changed", [c])
+		c.connect("structure_change", self, "_on_connected_structure_change", [c])
 		if bidirectional:
 			c.connect_to(self)
 
@@ -89,6 +89,7 @@ func get_structure_percent() -> float:
 func report_info() -> void:
 	if not _processing:
 		_processing = true
+		emit_signal("structure_change", _structure, _structure, _max_structure)
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
 			c.report_info()
@@ -108,6 +109,6 @@ func process_turn() -> void:
 # Handler Methods
 # -----------------------------------------------------------
 
-func _on_connected_structure_changed(old_structure : float, new_structure : float, max_structure : float, component : ShipComponent) -> void:
+func _on_connected_structure_change(old_structure : float, new_structure : float, max_structure : float, component : ShipComponent) -> void:
 	pass
 

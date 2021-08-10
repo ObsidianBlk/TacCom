@@ -6,9 +6,9 @@ class_name Ship
 # Signals
 # -----------------------------------------------------------
 signal turn_complete
-signal structure_change(structure, max_structure)
+signal structure_change(structure, max_structure, comp, connection)
 signal power_change(available, total)
-signal engine_stats_change(propulsion_units, turns_to_trigger)
+signal sublight_stats_change(propulsion_units, turns_to_trigger)
 
 # -----------------------------------------------------------
 # Constants and Enums
@@ -135,8 +135,8 @@ func _swapFacing(edge : int):
 		return
 	
 	var pos = Vector2(
-		tex_region_size.x if tex_region_horizontal else 0,
-		0 if tex_region_horizontal else tex_region_size.y
+		tex_region_size.x if tex_region_horizontal else 0.0,
+		0.0 if tex_region_horizontal else tex_region_size.y
 	)
 	match (edge):
 		Hexmap.EDGE.UP:
@@ -184,10 +184,11 @@ func construct_ship(def : Dictionary) -> void:
 						"SublightEngine":
 							if engineering != null:
 								comp = SublightEngine.new(info)
-								comp.connect("engine_propulsion", self, "_on_engine_propulsion")
-								comp.connect("engine_stats_change", self, "_on_engine_stats_change")
+								comp.connect("sublight_propulsion", self, "_on_sublight_propulsion")
+								comp.connect("sublight_stats_change", self, "_on_sublight_stats_change")
 								engineering.connect_powered_component(comp)
 					if comp != null:
+						comp.connect("structure_change", self, "_on_structure_change", [section, def[section].structure])
 						struct.connect_to(comp)
 				else:
 					print("Structure name ", def[section].structure, " unknown")
@@ -225,7 +226,7 @@ func face_and_shift(deg : float, incremental : bool = false) -> void:
 
 func report_info() -> void:
 	var info = mid_structure.get_structure()
-	emit_signal("structure_change", info.structure, info.max_structure)
+	emit_signal("structure_change", info.structure, info.max_structure, "Ship", "")
 	mid_structure.report_info()
 
 
@@ -236,12 +237,16 @@ func process_turn() -> void:
 # -----------------------------------------------------------
 # Handler Methods
 # -----------------------------------------------------------
-func _on_engine_propulsion(units_to_move : int) -> void:
+func _on_structure_change(old_structure : int, new_structure : int, max_structure : int, comp : String, connection : String) -> void:
+		print("Obtained a info on ", comp, " for connection to ", connection)
+		emit_signal("structure_change", new_structure, max_structure, comp, connection)
+	
+	
+func _on_sublight_propulsion(units_to_move : int) -> void:
 	shift_to_facing(units_to_move)
 
 func _on_power_change(available : int, total : int) -> void:
 	emit_signal("power_change", available, total)
 
-func _on_engine_stats_change(propulsion_units : int, turns_to_trigger : int) -> void:
-	print("Engines Changed")
-	emit_signal("engine_stats_change", propulsion_units, turns_to_trigger)
+func _on_sublight_stats_change(propulsion_units : int, turns_to_trigger : int) -> void:
+	emit_signal("sublight_stats_change", propulsion_units, turns_to_trigger)

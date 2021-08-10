@@ -5,8 +5,8 @@ class_name SublightEngine
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-signal engine_propulsion(units)
-signal engine_stats_change(propulsion_units, turns_to_trigger)
+signal sublight_propulsion(units)
+signal sublight_stats_change(propulsion_units, turns_to_trigger)
 
 # -----------------------------------------------------------
 # Variables
@@ -25,7 +25,7 @@ func _init(info : Dictionary).(info) -> void:
 		_propulsion_units = info.propulsion_units
 	if "turns_to_trigger" in info:
 		_turns_to_trigger = info.turns_to_trigger
-	emit_signal("engine_stats_change", _propulsion_units, _turns_to_trigger)
+	emit_signal("sublight_stats_change", _propulsion_units, _turns_to_trigger)
 
 # -----------------------------------------------------------
 # Private Methods
@@ -37,8 +37,7 @@ func _init(info : Dictionary).(info) -> void:
 # -----------------------------------------------------------
 func report_info() -> void:
 	if not _processing:
-		print("Emitting Engine Info")
-		emit_signal("engine_stats_change", _propulsion_units, _turns_to_trigger)
+		emit_signal("sublight_stats_change", _propulsion_units, _turns_to_trigger)
 		.report_info()
 		
 func process_turn() -> void:
@@ -47,7 +46,7 @@ func process_turn() -> void:
 			_turns_passed += 1
 			if _turns_passed == _turns_to_trigger:
 				_turns_passed = 0
-				emit_signal("engine_propulsion", _propulsion_units)
+				emit_signal("sublight_propulsion", _propulsion_units)
 		else:
 			_turns_passed = max(_turns_passed - 1, 0)
 		
@@ -60,12 +59,12 @@ func process_turn() -> void:
 # Handler Methods
 # -----------------------------------------------------------
 
-func _on_order_engines(units_to_move : int = 0) -> void:
+func _on_order_sublight(units_to_move : int = 0) -> void:
 	if units_to_move <= 0 or units_to_move > _propulsion_units:
 		units_to_move = _propulsion_units
 	_units_to_move = units_to_move
 	emit_signal("pull_power", _power_required)
 
-func _on_belay_engines() -> void:
+func _on_belay_sublight() -> void:
 	emit_signal("release_power")
 
