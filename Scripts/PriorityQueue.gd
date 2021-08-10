@@ -26,6 +26,11 @@ func peek(index : int):
 		}
 	return null
 
+func peek_value(index : int):
+	if index >= 0 and index < _data.size():
+		return _data[index][1]
+	return null
+
 func find(value) -> int:
 	for i in range(_data.size()):
 		if _data[i][1] == value:

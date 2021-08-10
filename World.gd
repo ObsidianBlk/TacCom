@@ -30,6 +30,28 @@ func _add_ship_to_region(coord : Vector2) -> void:
 	ship.mid_color = Color("#a4a28c")
 	ship.dark_color = Color("#838164")
 	ship.faction = "TAC"
+	
+	ship.construct_ship({
+		"Engineering":{
+			"structure":"mid",
+			"info": {
+				"structure":30,
+				"defense":[30,0,10],
+				"power":4
+			}
+		},
+		"SublightEngine":{
+			"structure":"aft",
+			"info":{
+				"structure":30,
+				"defense":[30,0,10],
+				"power_required":1,
+				"propulsion_units":1,
+				"turns_to_trigger":1
+			}
+		}
+	})
+	
 	region.add_ship(ship)
 	ship.coord = coord
 

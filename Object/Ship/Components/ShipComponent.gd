@@ -16,7 +16,7 @@ signal structure_changed(old_structure, new_structure, max_structure)
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
-var _initialized = false
+var _processing = false
 var _job_type = Crewman.TYPE.GENERAL
 var _connections : PriorityQueue = PriorityQueue.new()
 var _priority : float = 0
@@ -64,27 +64,45 @@ func connect_to(c : ShipComponent, bidirectional : bool = false) -> void:
 func get_priority() -> float:
 	return _priority
 
-func get_structure() -> Dictionary:
-	var s = _structure
-	var ms = _max_structure
-	for c in _connections:
-		var csi = c.get_structure()
-		s += csi.structure
-		ms += csi.max_structure
-	return {
-		"structure":s,
-		"max_structure":ms
-	}
+func get_structure(originator = null):
+	if not _processing:
+		_processing = true
+		var s = _structure
+		var ms = _max_structure
+		for i in range(_connections.size()):
+			var c = _connections.peek_value(i)
+			var csi = c.get_structure()
+			if csi != null:
+				s += csi.structure
+				ms += csi.max_structure
+		_processing = false
+		return {
+			"structure":s,
+			"max_structure":ms
+		}
+	return null
 
 func get_structure_percent() -> float:
 	var si = get_structure()
 	return si.structure / si.max_structure
 
+func report_info() -> void:
+	if not _processing:
+		_processing = true
+		for i in range(_connections.size()):
+			var c = _connections.peek_value(i)
+			c.report_info()
+		_processing = false
 
 func process_turn() -> void:
-	# This method should be overridden to handle what a component will do
-	# after the player clicks the "end turn" button
-	pass
+	if not _processing:
+		_processing = true
+		# This method should be overridden to handle what a component will do
+		# after the player clicks the "end turn" button
+		for i in range(_connections.size()):
+			var c = _connections.peek_value(i)
+			c.process_turn()
+		_processing = false
 
 # -----------------------------------------------------------
 # Handler Methods

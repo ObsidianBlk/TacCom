@@ -31,12 +31,18 @@ func connect_powered_component(pc : PoweredComponent) -> void:
 	pc.connect("pull_power", self, "_on_pull_power", [pc])
 	pc.connect("release_power", self, "_on_release_power", [pc])
 
+func report_info() -> void:
+	if not _processing:
+		emit_signal("power_change", _available_power, _max_power)
+		.report_info()
 
 func process_turn() -> void:
-	# Just automatically take back ALL the power! HA!
-	_available_power = _max_power
-	_reserved = {}
-	# TODO: Handle Crew at this point...
+	if not _processing:
+		# Just automatically take back ALL the power! HA!
+		_available_power = _max_power
+		_reserved = {}
+		# TODO: Handle Crew at this point...
+		.process_turn()
 
 # -----------------------------------------------------------
 # Handler Methods

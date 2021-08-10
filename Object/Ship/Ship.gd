@@ -6,6 +6,9 @@ class_name Ship
 # Signals
 # -----------------------------------------------------------
 signal turn_complete
+signal structure_change(structure, max_structure)
+signal power_change(available, total)
+signal engine_stats_change(propulsion_units, turns_to_trigger)
 
 # -----------------------------------------------------------
 # Constants and Enums
@@ -29,10 +32,14 @@ export (float, 0.0, 360.0) var facing = 0.0		setget set_facing
 # Variables
 # -----------------------------------------------------------
 
+var ready : bool = false
 var sprite : Sprite = null
 var fore_structure : ShipComponent = null
 var mid_structure : ShipComponent = null
-var aft_structure : ShipComponent
+var aft_structure : ShipComponent = null
+var engineering : Engineering = null
+
+var construct_def = null
 
 # -----------------------------------------------------------
 # Onready Variables
@@ -103,6 +110,8 @@ func _ready() -> void:
 		_swapFacing(facing_edge())
 	
 	_set_faction(faction, true)
+	ready = true
+	
 	var struct_info = {
 		"structure":30,
 		"defense":[30,0,10]
@@ -112,6 +121,9 @@ func _ready() -> void:
 	aft_structure = ShipComponent.new(struct_info)
 	mid_structure.connect_to(fore_structure, true)
 	mid_structure.connect_to(aft_structure, true)
+	
+	if construct_def != null:
+		construct_ship(construct_def)
 
 	
 
@@ -144,6 +156,48 @@ func _swapFacing(edge : int):
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
+func construct_ship(def : Dictionary) -> void:
+	if not ready:
+		construct_def = def
+		return
+	
+	for section in def.keys():
+		if section in ["Engineering", "SublightEngine"]:
+			if "info" in def[section] and "structure" in def[section]:
+				var info = def[section].info
+				var struct = null
+				match def[section].structure:
+					"fore":
+						struct = fore_structure
+					"mid":
+						struct = mid_structure
+					"aft":
+						struct = aft_structure
+				if struct != null:
+					var comp = null
+					match section:
+						"Engineering":
+							if engineering == null:
+								comp = Engineering.new(info)
+								engineering = comp
+								engineering.connect("power_change", self, "_on_power_change")
+						"SublightEngine":
+							if engineering != null:
+								comp = SublightEngine.new(info)
+								comp.connect("engine_propulsion", self, "_on_engine_propulsion")
+								comp.connect("engine_stats_change", self, "_on_engine_stats_change")
+								engineering.connect_powered_component(comp)
+					if comp != null:
+						struct.connect_to(comp)
+				else:
+					print("Structure name ", def[section].structure, " unknown")
+			else:
+				print("Missing info or structure property")
+		else:
+			print("Section ", section, " not in list")
+
+
+
 func facing_edge() -> int:
 	if (facing >= 330 and facing < 360) or (facing >= 0 and facing < 30):
 		return Hexmap.EDGE.UP
@@ -159,21 +213,35 @@ func facing_edge() -> int:
 		return Hexmap.EDGE.RIGHT_UP
 	return -1
 
-func shift_to_facing() -> void:
+func shift_to_facing(units : int = 1) -> void:
 	if hexmap_node:
-		set_coord(hexmap_node.get_neighbor_coord(coord, facing_edge()))
+		for _i in range(units):
+			set_coord(hexmap_node.get_neighbor_coord(coord, facing_edge()))
 
 func face_and_shift(deg : float, incremental : bool = false) -> void:
 	if hexmap_node:
 		set_facing(facing + deg if incremental else deg)
 		shift_to_facing()
 
+func report_info() -> void:
+	var info = mid_structure.get_structure()
+	emit_signal("structure_change", info.structure, info.max_structure)
+	mid_structure.report_info()
+
+
 func process_turn() -> void:
-	pass
+	mid_structure.process_turn()
 
 
 # -----------------------------------------------------------
 # Handler Methods
 # -----------------------------------------------------------
+func _on_engine_propulsion(units_to_move : int) -> void:
+	shift_to_facing(units_to_move)
 
+func _on_power_change(available : int, total : int) -> void:
+	emit_signal("power_change", available, total)
 
+func _on_engine_stats_change(propulsion_units : int, turns_to_trigger : int) -> void:
+	print("Engines Changed")
+	emit_signal("engine_stats_change", propulsion_units, turns_to_trigger)
