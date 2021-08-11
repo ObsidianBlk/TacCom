@@ -1,0 +1,57 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Shaders/Fragment/colorswap.shader" type="Shader" id=1]
+[ext_resource path="res://Assets/Graphics/Asteroid.png" type="Texture" id=2]
+[ext_resource path="res://Object/Asteroid/Asteroid.gd" type="Script" id=3]
+
+[sub_resource type="ShaderMaterial" id=1]
+shader = ExtResource( 1 )
+shader_param/use_screen = false
+shader_param/alpha = 1.0
+shader_param/color_1_from = Color( 0.25098, 0.25098, 0.25098, 1 )
+shader_param/color_1_to = Color( 0.341176, 0.321569, 0.294118, 1 )
+shader_param/color_2_from = Color( 0.376471, 0.376471, 0.376471, 1 )
+shader_param/color_2_to = Color( 0.407843, 0.376471, 0.329412, 1 )
+shader_param/color_3_from = Color( 0.784314, 0.784314, 0.784314, 1 )
+shader_param/color_3_to = Color( 0.596078, 0.580392, 0.513726, 1 )
+shader_param/color_4_from = Color( 0.862745, 0.862745, 0.862745, 1 )
+shader_param/color_4_to = Color( 0.698039, 0.643137, 0.541176, 0.796078 )
+shader_param/color_5_from = Color( 1, 1, 1, 1 )
+shader_param/color_5_to = Color( 1, 1, 1, 1 )
+shader_param/color_6_from = Color( 1, 1, 1, 1 )
+shader_param/color_6_to = Color( 1, 1, 1, 1 )
+shader_param/color_7_from = Color( 1, 1, 1, 1 )
+shader_param/color_7_to = Color( 1, 1, 1, 1 )
+shader_param/color_8_from = Color( 1, 1, 1, 1 )
+shader_param/color_8_to = Color( 1, 1, 1, 1 )
+shader_param/threshold = 0.05
+
+[sub_resource type="Animation" id=2]
+resource_name = "Bob"
+length = 1.2
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("Sprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.3, 0.6, 0.9 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 1,
+"values": [ 0, 1, 2, 3 ]
+}
+
+[node name="Asteroid" type="Node2D"]
+script = ExtResource( 3 )
+
+[node name="Sprite" type="Sprite" parent="."]
+material = SubResource( 1 )
+position = Vector2( 0, -6 )
+texture = ExtResource( 2 )
+hframes = 4
+
+[node name="Anim" type="AnimationPlayer" parent="."]
+autoplay = "Bob"
+anims/Bob = SubResource( 2 )

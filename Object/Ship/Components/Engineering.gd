@@ -48,6 +48,9 @@ func process_turn() -> void:
 # Handler Methods
 # -----------------------------------------------------------
 func _on_pull_power(amount : int, pc : PoweredComponent) -> void:
+	if amount <= 0:
+		return
+
 	var oap = _available_power
 	if amount > _available_power:
 		amount = _available_power

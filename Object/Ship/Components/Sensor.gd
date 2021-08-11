@@ -56,19 +56,19 @@ func process_turn() -> void:
 
 func command(order : String) -> bool:
 	if not _processing:
-		if order == "Sensor":
+		if order == "Sensors":
 			if _radius.long > 0:
 				_ordered = true
 				emit_signal("pull_power", _power_required)
-			emit_signal("ordered", _ordered)
-			return true
+				emit_signal("ordered", _ordered)
+				return true
 		return .command(order)
 	return false
 
 
 func belay(order : String) -> void:
 	if not _processing:
-		if _ordered:
+		if order == "Sensors" and _ordered:
 			_ordered = false
 			emit_signal("release_power")
 			emit_signal("ordered", _ordered)

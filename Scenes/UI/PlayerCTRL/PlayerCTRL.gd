@@ -9,6 +9,8 @@ signal freelook(c)
 signal request_maneuver_direction
 
 
+enum PROCESS_STATE {FOCUS=0, PROCESS=1, END=2}
+
 # -----------------------------------------------------------
 # Exports
 # -----------------------------------------------------------
@@ -28,17 +30,22 @@ var showing_hud = false
 
 var _ships = []
 var _ship_idx = -1
+
 var _proc_idx = -1
 var _proc_delay = 0.0
+var _proc_state = PROCESS_STATE.FOCUS
+
+var _ship_structure = 0
 
 # -----------------------------------------------------------
 # Onready Variables
 # -----------------------------------------------------------
 onready var ship_status = get_node("HBC/Info/Status")
-onready var commands = get_node("HBC/Info/Commands")
+onready var command = get_node("HBC/Info/Command")
 onready var power = get_node("HBC/Info/Power")
 onready var engines = get_node("HBC/Info/Engines")
 onready var maneuver = get_node("HBC/Info/Maneuver")
+onready var sensors = get_node("HBC/Info/Sensors")
 onready var tween = get_node("Tween")
 
 
@@ -81,12 +88,14 @@ func _ready() -> void:
 	power.visible = false
 	engines.visible = false
 	maneuver.visible = false
-	commands.visible = false
-	queue[commands] = {"prev": maneuver, "next": power, "connection":"", "struct":0}
-	queue[power] = {"prev": maneuver, "next": engines, "connection":"", "struct":0}
-	queue[engines] = {"prev": power, "next": maneuver, "connection":"", "struct":0}
-	queue[maneuver] = {"prev": engines, "next": power, "connection":"", "struct":0}
-	cur = power
+	command.visible = false
+	sensors.visible = false
+	queue[command] = {"prev": maneuver, "next": power, "connection":"", "struct":0}
+	queue[power] = {"prev": command, "next": sensors, "connection":"", "struct":0}
+	queue[sensors] = {"prev": power, "next": engines, "connection":"", "struct":0}
+	queue[engines] = {"prev": sensors, "next": maneuver, "connection":"", "struct":0}
+	queue[maneuver] = {"prev": engines, "next": command, "connection":"", "struct":0}
+	cur = command
 	cur.visible = true
 
 
@@ -110,14 +119,26 @@ func _process(delta : float) -> void:
 	_proc_delay -= delta
 	if _proc_idx >= 0 and _proc_delay <= 0:
 		_proc_delay = 1.0
-		var ship = _ships[_proc_idx]
-		ship.process_turn()
-		_proc_idx += 1
-		if _proc_idx >= _ships.size():
-			_proc_idx = -1
-			set_process(false)
-			set_process_unhandled_input(true)
-			emit_signal("process_complete")
+		var ship = null
+		if _proc_idx < _ships.size():
+			ship = _ships[_proc_idx]
+		
+		match _proc_state:
+			PROCESS_STATE.FOCUS:
+				region_node.set_target_node(ship)
+				_proc_state = PROCESS_STATE.PROCESS
+			PROCESS_STATE.PROCESS:
+				ship.process_turn()
+				_proc_idx += 1
+				_proc_state = PROCESS_STATE.FOCUS
+				if _proc_idx >= _ships.size():
+					_proc_state = PROCESS_STATE.END
+			PROCESS_STATE.END:
+				_proc_idx = -1
+				region_node.set_target_node(_ships[_ship_idx])
+				set_process(false)
+				set_process_unhandled_input(true)
+				emit_signal("process_complete")
 
 # -----------------------------------------------------------
 # Private Methods
@@ -151,6 +172,8 @@ func _unfocus_ship() -> void:
 		var ship : Ship = _ships[_ship_idx]
 		_DisconnectShip(ship, "structure_change", self, "_on_structure_change")
 		_DisconnectShip(ship, "ordered", self, "_on_ordered")
+		_DisconnectShip(ship, "commands_change", self, "_on_commands_change")
+		_DisconnectShip(ship, "Invalid_command", self, "_on_invalid_command")
 		_DisconnectShip(ship, "power_change", self, "_on_power_change")
 		_DisconnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_DisconnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
@@ -161,6 +184,8 @@ func _focus_ship() -> void:
 		var ship : Ship = _ships[_ship_idx]
 		_ConnectShip(ship, "structure_change", self, "_on_structure_change")
 		_ConnectShip(ship, "ordered", self, "_on_ordered")
+		_ConnectShip(ship, "commands_change", self, "_on_commands_change")
+		_ConnectShip(ship, "Invalid_command", self, "_on_invalid_command")
 		_ConnectShip(ship, "power_change", self, "_on_power_change")
 		_ConnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_ConnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
@@ -201,11 +226,13 @@ func _on_game_ready() -> void:
 
 func _on_process_turn() -> void:
 	if _ships.size() > 0:
+		_proc_state = PROCESS_STATE.FOCUS
 		_proc_idx = 0
 		showing_hud = false
 		margin_top = 0
 		_SetVisToggle(false, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+		_SetVisToggle(false, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Missile_BTN", "_on_Missile_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Lasers_BTN", "_on_Lasers_BTN_toggled")
 		set_process_unhandled_input(false)
@@ -263,8 +290,13 @@ func _on_structure_change(struct : int, max_structure : int, comp : String, conn
 		p = floor((float(struct) / float(max_structure)) * 100)
 	match comp:
 		"Ship":
-			queue[commands].struct = p
-			if cur == commands:
+			_ship_structure = p
+			#if cur == commands:
+			#	_SetStatusConnection(queue[cur].connection, queue[cur].struct)
+		"Command":
+			queue[command].struct = p
+			queue[command].connection = connection
+			if cur == command:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 		"Engineering":
 			queue[power].connection = connection
@@ -281,21 +313,29 @@ func _on_structure_change(struct : int, max_structure : int, comp : String, conn
 			queue[maneuver].struct = p
 			if cur == maneuver:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
+		"Sensors":
+			queue[sensors].connection = connection
+			queue[sensors].struct = p
+			if cur == sensors:
+				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 
 func _on_ordered(ordered : bool, comp : String) -> void:
 	match comp:
 		"SublightEngine":
 			_SetVisToggle(ordered, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
-			#var btn = get_node("HBC/Info/Engines/Sublight_BTN")
-			#btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
-			#btn.pressed = ordered
-			#btn.connect("toggled", self, "_on_Sublight_BTN_toggled")
 		"ManeuverEngine":
 			_SetVisToggle(ordered, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
-			#var btn = get_node("HBC/Info/Maneuver/Manuvers_BTN")
-			#btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
-			#btn.pressed = ordered
-			#btn.connect("toggled", self, "_on_Manuvers_BTN_toggled")
+		"Sensors":
+			_SetVisToggle(ordered, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
+
+func _on_commands_change(available : int, total : int) -> void:
+	if command:
+		command.get_node("Available").text = String(available)
+		command.get_node("Maximum").text = String(total)
+
+func _on_invalid_command(order : String, ship : Ship) -> void:
+	print("Invalid Command Made")
+	ship.belay(order)
 
 func _on_power_change(available : int, total : int) -> void:
 	if power:
@@ -313,7 +353,9 @@ func _on_maneuver_stats_change(degrees : float, turns_to_trigger : int) -> void:
 		maneuver.get_node("Turns").text = String(turns_to_trigger)
 
 func _on_sensor_stats_change(short_radius : int, long_radius : int) -> void:
-	return
+	if sensors:
+		sensors.get_node("Short").text = String(short_radius)
+		sensors.get_node("Long").text = String(long_radius)
 
 func _on_Sublight_BTN_toggled(button_pressed):
 	if _ship_idx >= 0:
@@ -321,10 +363,6 @@ func _on_Sublight_BTN_toggled(button_pressed):
 		if button_pressed:
 			if not ship.command("SublightEngine"):
 				_SetVisToggle(false, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
-				#var btn = get_node("HBC/Info/Commands/Buttons/Sublight_BTN")
-				#btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
-				#btn.pressed = false
-				#btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
 		else:
 			ship.belay("SublightEngine")
 
@@ -335,12 +373,6 @@ func _on_Manuvers_BTN_toggled(button_pressed):
 		if button_pressed:
 			set_process_unhandled_input(false)
 			emit_signal("request_maneuver_direction")
-			#if not ship.command("ManeuverEngine"):
-			#	_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
-				#var btn = get_node("HBC/Info/Commands/Buttons/Manuvers_BTN")
-				#btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
-				#btn.pressed = false
-				#btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
 		else:
 			ship.belay("ManeuverEngine")
 
@@ -362,3 +394,13 @@ func _on_maneuver(dir):
 	if dir == 0 or not ship.command(cmd):
 		_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
 	set_process_unhandled_input(true)
+
+
+func _on_Sensors_BTN_toggled(button_pressed):
+	if _ship_idx >= 0:
+		var ship : Ship = _ships[_ship_idx]
+		if button_pressed:
+			if not ship.command("Sensors"):
+				_SetVisToggle(false, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
+		else:
+			ship.belay("Sensors")

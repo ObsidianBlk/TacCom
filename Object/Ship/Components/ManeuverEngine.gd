@@ -69,21 +69,23 @@ func process_turn() -> void:
 
 func command(order : String) -> bool:
 	if not _processing:
-		if order == "ManeuverEngine_L":
-			_dir = 1
-		elif order == "ManeuverEngine_R":
-			_dir = -1
-		if _dir != 0:
-			emit_signal("pull_power", _power_required)
-			emit_signal("ordered", _dir != 0)
-			return true
+		if order in ["ManeuverEngine_L", "ManeuverEngine_R"] and _dir == 0:
+			if order == "ManeuverEngine_L":
+				_dir = 1
+			elif order == "ManeuverEngine_R":
+				_dir = -1
+			if _dir != 0:
+				emit_signal("pull_power", _power_required)
+				emit_signal("ordered", _dir != 0)
+				return true
 		return .command(order)
 	return false
 
 
 func belay(order : String) -> void:
 	if not _processing:
-		_dir = 0
-		emit_signal("release_power")
-		emit_signal("ordered", false)
+		if _dir != 0 and order in ["ManeuverEngine_L", "ManeuverEngine_R", "ManeuverEngine"]:
+			_dir = 0
+			emit_signal("release_power")
+			emit_signal("ordered", false)
 		.belay(order)

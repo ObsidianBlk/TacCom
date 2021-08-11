@@ -74,9 +74,10 @@ func command(order : String) -> bool:
 
 func belay(order : String) -> void:
 	if not _processing:
-		_ordered = false
-		emit_signal("release_power")
-		emit_signal("ordered", _ordered)
+		if order == "SublightEngine" and _ordered:
+			_ordered = false
+			emit_signal("release_power")
+			emit_signal("ordered", _ordered)
 		.belay(order)
 
 

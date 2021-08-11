@@ -9,6 +9,16 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Entity",
+"class": "Asteroid",
+"language": "GDScript",
+"path": "res://Object/Asteroid/Asteroid.gd"
+}, {
+"base": "ShipComponent",
+"class": "Command",
+"language": "GDScript",
+"path": "res://Object/Ship/Components/Command.gd"
+}, {
 "base": "Node",
 "class": "Crewman",
 "language": "GDScript",
@@ -54,7 +64,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Object/Ship/Components/Sensor.gd"
 }, {
-"base": "Node2D",
+"base": "Entity",
 "class": "Ship",
 "language": "GDScript",
 "path": "res://Object/Ship/Ship.gd"
@@ -70,6 +80,8 @@ _global_script_classes=[ {
 "path": "res://Object/Ship/Components/SublightEngine.gd"
 } ]
 _global_script_class_icons={
+"Asteroid": "",
+"Command": "",
 "Crewman": "",
 "Engineering": "",
 "Entity": "",

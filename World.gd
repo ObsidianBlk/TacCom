@@ -6,6 +6,7 @@ onready var logo_node = get_node_or_null("Logo")
 onready var region = get_node_or_null("Region")
 
 onready var Ship_Node = preload("res://Object/Ship/Ship.tscn")
+onready var Ast_Node = preload("res://Object/Asteroid/Asteroid.tscn")
 
 
 func _ready() -> void:
@@ -18,6 +19,11 @@ func _ready() -> void:
 		call_deferred("_add_ships")
 
 func _add_ships() -> void:
+	var ast = Ast_Node.instance()
+	if ast:
+		region.add_env(ast)
+		ast.coord = Vector2(5, 0)
+	
 	_add_ship_to_region(Vector2.ZERO)
 	_add_ship_to_region(Vector2(-3, 1))
 	_add_ship_to_region(Vector2(3, -1))
@@ -32,6 +38,14 @@ func _add_ship_to_region(coord : Vector2) -> void:
 	ship.faction = "TAC"
 	
 	ship.construct_ship({
+		"Command":{
+			"structure":"fore",
+			"info":{
+				"structure":30,
+				"defense":[30, 0, 10],
+				"commands":2
+			}
+		},
 		"Engineering":{
 			"structure":"mid",
 			"info": {
@@ -60,7 +74,7 @@ func _add_ship_to_region(coord : Vector2) -> void:
 				"turns_to_trigger":1
 			}
 		},
-		"Sensor":{
+		"Sensors":{
 			"structure":"fore",
 			"info":{
 				"structure":30,
