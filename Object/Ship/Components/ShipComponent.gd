@@ -95,6 +95,25 @@ func report_info() -> void:
 			c.report_info()
 		_processing = false
 
+func command(order : String) -> bool:
+	if not _processing:
+		_processing = true
+		for i in range(_connections.size()):
+			var c = _connections.peek_value(i)
+			if c.command(order):
+				_processing = false
+				return true
+		_processing = false
+	return false
+
+func belay(order : String) -> void:
+	if not _processing:
+		_processing = true
+		for i in range(_connections.size()):
+			var c = _connections.peek_value(i)
+			c.belay(order)
+		_processing = false
+
 func process_turn() -> void:
 	if not _processing:
 		_processing = true

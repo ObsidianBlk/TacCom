@@ -49,6 +49,16 @@ func _add_ship_to_region(coord : Vector2) -> void:
 				"propulsion_units":1,
 				"turns_to_trigger":1
 			}
+		},
+		"ManeuverEngine":{
+			"structure":"fore",
+			"info":{
+				"structure":30,
+				"defense":[30,0,10],
+				"power_required":1,
+				"degrees":60,
+				"turns_to_trigger":1
+			}
 		}
 	})
 	

@@ -66,5 +66,6 @@ func _on_release_power(pc : PoweredComponent) -> void:
 	if pc in _reserved:
 		_available_power += _reserved[pc]
 		_reserved.erase(pc)
+		pc.power(0)
 		emit_signal("power_change", _available_power, _max_power)
 

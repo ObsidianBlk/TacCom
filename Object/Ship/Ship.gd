@@ -6,9 +6,11 @@ class_name Ship
 # Signals
 # -----------------------------------------------------------
 signal turn_complete
+signal ordered(o, comp)
 signal structure_change(structure, max_structure, comp, connection)
 signal power_change(available, total)
 signal sublight_stats_change(propulsion_units, turns_to_trigger)
+signal maneuver_stats_change(degrees, turns_to_trigger)
 
 # -----------------------------------------------------------
 # Constants and Enums
@@ -162,7 +164,7 @@ func construct_ship(def : Dictionary) -> void:
 		return
 	
 	for section in def.keys():
-		if section in ["Engineering", "SublightEngine"]:
+		if section in ["Engineering", "SublightEngine", "ManeuverEngine"]:
 			if "info" in def[section] and "structure" in def[section]:
 				var info = def[section].info
 				var struct = null
@@ -186,6 +188,14 @@ func construct_ship(def : Dictionary) -> void:
 								comp = SublightEngine.new(info)
 								comp.connect("sublight_propulsion", self, "_on_sublight_propulsion")
 								comp.connect("sublight_stats_change", self, "_on_sublight_stats_change")
+								comp.connect("ordered", self, "_on_ordered", [section])
+								engineering.connect_powered_component(comp)
+						"ManeuverEngine":
+							if engineering != null:
+								comp = ManeuverEngine.new(info)
+								comp.connect("maneuver", self, "_on_maneuver")
+								comp.connect("maneuver_stats_change", self, "_on_maneuver_stats_change")
+								comp.connect("ordered", self, "_on_ordered", [section])
 								engineering.connect_powered_component(comp)
 					if comp != null:
 						comp.connect("structure_change", self, "_on_structure_change", [section, def[section].structure])
@@ -229,6 +239,11 @@ func report_info() -> void:
 	emit_signal("structure_change", info.structure, info.max_structure, "Ship", "")
 	mid_structure.report_info()
 
+func command(order : String) -> bool:
+	return mid_structure.command(order)
+
+func belay(order : String) -> void:
+	mid_structure.belay(order)
 
 func process_turn() -> void:
 	mid_structure.process_turn()
@@ -238,15 +253,22 @@ func process_turn() -> void:
 # Handler Methods
 # -----------------------------------------------------------
 func _on_structure_change(old_structure : int, new_structure : int, max_structure : int, comp : String, connection : String) -> void:
-		print("Obtained a info on ", comp, " for connection to ", connection)
 		emit_signal("structure_change", new_structure, max_structure, comp, connection)
-	
-	
+
+func _on_ordered(ordered : bool, comp : String) -> void:
+	emit_signal("ordered", ordered, comp)
+
 func _on_sublight_propulsion(units_to_move : int) -> void:
 	shift_to_facing(units_to_move)
+
+func _on_maneuver(degrees : float) -> void:
+	set_facing(facing + degrees)
 
 func _on_power_change(available : int, total : int) -> void:
 	emit_signal("power_change", available, total)
 
 func _on_sublight_stats_change(propulsion_units : int, turns_to_trigger : int) -> void:
 	emit_signal("sublight_stats_change", propulsion_units, turns_to_trigger)
+
+func _on_maneuver_stats_change(degrees : float, turns_to_trigger : int) -> void:
+	emit_signal("maneuver_stats_change", degrees, turns_to_trigger)
