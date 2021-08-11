@@ -33,6 +33,7 @@ var _cell_grid = []
 var _cell_info = {}
 var _positional_offset = Vector2.ZERO
 var _highlights = {}
+var _mask = {}	# NOTE: This "mask" is cells that are visible!
 
 var last_position = null
 
@@ -144,7 +145,7 @@ func _UpdateGridOffset() -> void:
 			cell.global_coord = world_to_coord(cell.sprite.global_position)
 			
 			# Check if cell is visible
-			if not _CoordInBounds(cell.global_coord):
+			if not _CoordInBounds(cell.global_coord) or not is_coord_masked(cell.global_coord):
 				cell.sprite.visible = false
 			else:
 				cell.sprite.visible = true
@@ -284,6 +285,51 @@ func clear_highlight_coords(coords : Array) -> void:
 
 func clear_highlights() -> void:
 	_highlights = {}
+
+func set_cell_mask(c : int, r : int) -> void:
+	var coord = Vector2(c, r)
+	if not coord in _mask:
+		_mask[coord] = 0
+	_mask[coord] += 1
+
+func set_coord_mask(coord : Vector2) -> void:
+	set_cell_mask(int(coord.x), int(coord.y))
+
+func set_mask_coords(coord_list : Array) -> void:
+	for coord in coord_list:
+		if coord is Vector2:
+			set_cell_mask(int(coord.x), int(coord.y))
+
+func is_cell_masked(c : int, r : int) -> bool:
+	if _mask.keys().size() > 0:
+		return (Vector2(c, r) in _mask)
+	return true # If there is no "mask", then all cells are considered "masked" (visible)
+
+func is_coord_masked(coord : Vector2) -> bool:
+	return is_cell_masked(int(coord.x), int(coord.y))
+
+func clear_cell_mask(c : int, r : int) -> void:
+	var coord = Vector2(c, r)
+	if coord in _mask:
+		if _mask[coord] > 1:
+			_mask[coord] -= 1
+		else:
+			_mask.erase(coord)
+
+
+func clear_coord_mask(coord : Vector2) -> void:
+	clear_cell_mask(int(coord.x), int(coord.y))
+
+
+func clear_mask_coords(coord_list : Array) -> void:
+	for coord in coord_list:
+		if coord is Vector2:
+			clear_cell_mask(int(coord.x), int(coord.y))
+
+
+func clear_mask() -> void:
+	_mask = {}
+
 
 func get_cells_at_distance(c : int, r : int, radius : int, inclusive : bool = false) -> Array:
 	var cells = []

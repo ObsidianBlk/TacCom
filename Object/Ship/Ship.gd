@@ -11,6 +11,7 @@ signal structure_change(structure, max_structure, comp, connection)
 signal power_change(available, total)
 signal sublight_stats_change(propulsion_units, turns_to_trigger)
 signal maneuver_stats_change(degrees, turns_to_trigger)
+signal sensor_stats_change(short_radius, long_radius)
 
 # -----------------------------------------------------------
 # Constants and Enums
@@ -28,7 +29,8 @@ export var tex_region_horizontal : bool = true			setget _set_tex_region_horizont
 export var light_color : Color = Color(0)				setget _set_light_color
 export var mid_color : Color = Color(0)					setget _set_mid_color
 export var dark_color : Color = Color(0)				setget _set_dark_color
-export (float, 0.0, 360.0) var facing = 0.0		setget set_facing
+export (float, 0.0, 360.0) var facing = 0.0				setget set_facing
+export var enable_update_sensor_mask : bool = false
 
 # -----------------------------------------------------------
 # Variables
@@ -42,6 +44,10 @@ var aft_structure : ShipComponent = null
 var engineering : Engineering = null
 
 var construct_def = null
+
+var sensor_short = 0
+var sensor_long = 0
+var sensor_mask_cells = []
 
 # -----------------------------------------------------------
 # Onready Variables
@@ -164,7 +170,7 @@ func construct_ship(def : Dictionary) -> void:
 		return
 	
 	for section in def.keys():
-		if section in ["Engineering", "SublightEngine", "ManeuverEngine"]:
+		if section in ["Engineering", "SublightEngine", "ManeuverEngine", "Sensor"]:
 			if "info" in def[section] and "structure" in def[section]:
 				var info = def[section].info
 				var struct = null
@@ -195,6 +201,13 @@ func construct_ship(def : Dictionary) -> void:
 								comp = ManeuverEngine.new(info)
 								comp.connect("maneuver", self, "_on_maneuver")
 								comp.connect("maneuver_stats_change", self, "_on_maneuver_stats_change")
+								comp.connect("ordered", self, "_on_ordered", [section])
+								engineering.connect_powered_component(comp)
+						"Sensor":
+							if engineering != null:
+								comp = Sensor.new(info)
+								comp.connect("sensor_stats_change", self, "_on_sensor_stats_change")
+								comp.connect("long_range", self, "_on_long_range")
 								comp.connect("ordered", self, "_on_ordered", [section])
 								engineering.connect_powered_component(comp)
 					if comp != null:
@@ -234,6 +247,25 @@ func face_and_shift(deg : float, incremental : bool = false) -> void:
 		set_facing(facing + deg if incremental else deg)
 		shift_to_facing()
 
+func update_sensor_mask() -> void:
+	print("Updating Sensor Mask...")
+	if hexmap_node:
+		if sensor_mask_cells.size() > 0:
+			print("Clearing old mask")
+			hexmap_node.clear_mask_coords(sensor_mask_cells)
+		if sensor_short > 0 or sensor_long > 0:
+			var dist = sensor_short
+			if sensor_long > 0:
+				dist += sensor_long
+			print("Setting a mask of radius ", dist)
+			sensor_mask_cells = hexmap_node.get_cells_at_distance_from_coord(coord, dist, true)
+			hexmap_node.set_mask_coords(sensor_mask_cells)
+		else:
+			print("Sensor range is 0")
+	else:
+		print("Missing Hexmap Node")
+
+
 func report_info() -> void:
 	var info = mid_structure.get_structure()
 	emit_signal("structure_change", info.structure, info.max_structure, "Ship", "")
@@ -247,6 +279,10 @@ func belay(order : String) -> void:
 
 func process_turn() -> void:
 	mid_structure.process_turn()
+	if enable_update_sensor_mask:
+		update_sensor_mask()
+	else:
+		print("Skipping sensor update")
 
 
 # -----------------------------------------------------------
@@ -264,6 +300,9 @@ func _on_sublight_propulsion(units_to_move : int) -> void:
 func _on_maneuver(degrees : float) -> void:
 	set_facing(facing + degrees)
 
+func _on_long_range(long_radius : int) -> void:
+	sensor_long = long_radius
+
 func _on_power_change(available : int, total : int) -> void:
 	emit_signal("power_change", available, total)
 
@@ -272,3 +311,10 @@ func _on_sublight_stats_change(propulsion_units : int, turns_to_trigger : int) -
 
 func _on_maneuver_stats_change(degrees : float, turns_to_trigger : int) -> void:
 	emit_signal("maneuver_stats_change", degrees, turns_to_trigger)
+
+func _on_sensor_stats_change(short_radius : int, long_radius : int) -> void:
+	print("Sensor Stats obtained")
+	sensor_short = short_radius
+	emit_signal("sensor_stats_change", short_radius, long_radius)
+	# NOTE: I do NOT update sensor_long here as it may not be used every
+	#  turn. The variable sensor_long gets set by _on_long_range()

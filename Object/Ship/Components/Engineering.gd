@@ -21,7 +21,7 @@ func _init(info : Dictionary).(info) -> void:
 	if "power" in info:
 		_max_power = info.power
 		_available_power = _max_power
-		emit_signal("power_change", _available_power, _max_power)
+		call_deferred("emit_signal", "power_change", _available_power, _max_power)
 
 # -----------------------------------------------------------
 # Public Methods

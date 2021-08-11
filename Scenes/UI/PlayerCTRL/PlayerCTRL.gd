@@ -6,6 +6,7 @@ extends Control
 # -----------------------------------------------------------
 signal process_complete
 signal freelook(c)
+signal request_maneuver_direction
 
 
 # -----------------------------------------------------------
@@ -58,14 +59,19 @@ func _set_faction(fac : String, force : bool = false) -> void:
 	if fac != faction or force:
 		faction = fac
 		if region_node != null:
-			print("Trying to set faction")
+			# Loop through any existing ships and disable their sensor masks
+			for i in range(_ships.size()):
+				_ships[i].enable_update_sensor_mask = false
+				
 			_ships = region_node.get_ships_in_faction(faction)
-			print("Obtained ", _ships.size(), " ships")
 			_ship_idx = 0 if _ships.size() > 0 else -1
-			if _ship_idx >= 0:
-				_focus_ship()
-		else:
-			print("Region not configured")
+			
+			# Loop through the new list and enable their sensor masks
+			for i in range(_ships.size()):
+				_ships[i].enable_update_sensor_mask = true
+				_ships[i].call_deferred("update_sensor_mask")
+				if i == _ship_idx:
+					_focus_ship()
 
 # -----------------------------------------------------------
 # Override Methods
@@ -77,11 +83,10 @@ func _ready() -> void:
 	maneuver.visible = false
 	commands.visible = false
 	queue[commands] = {"prev": maneuver, "next": power, "connection":"", "struct":0}
-	queue[power] = {"prev": commands, "next": engines, "connection":"", "struct":0}
+	queue[power] = {"prev": maneuver, "next": engines, "connection":"", "struct":0}
 	queue[engines] = {"prev": power, "next": maneuver, "connection":"", "struct":0}
-	queue[maneuver] = {"prev": engines, "next": commands, "connection":"", "struct":0}
-	print(queue)
-	cur = commands
+	queue[maneuver] = {"prev": engines, "next": power, "connection":"", "struct":0}
+	cur = power
 	cur.visible = true
 
 
@@ -149,6 +154,7 @@ func _unfocus_ship() -> void:
 		_DisconnectShip(ship, "power_change", self, "_on_power_change")
 		_DisconnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_DisconnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
+		_DisconnectShip(ship, "sensor_stats_change", self, "_on_sensor_stats_change")
 
 func _focus_ship() -> void:
 	if _ship_idx >= 0 and _ship_idx < _ships.size() and region_node != null:
@@ -158,6 +164,7 @@ func _focus_ship() -> void:
 		_ConnectShip(ship, "power_change", self, "_on_power_change")
 		_ConnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_ConnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
+		_ConnectShip(ship, "sensor_stats_change", self, "_on_sensor_stats_change")
 		region_node.set_target_node(ship)
 		ship.report_info()
 
@@ -197,8 +204,8 @@ func _on_process_turn() -> void:
 		_proc_idx = 0
 		showing_hud = false
 		margin_top = 0
-		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Sublight_BTN", "_on_Sublight_BTN_toggled")
-		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+		_SetVisToggle(false, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
+		_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Missile_BTN", "_on_Missile_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Lasers_BTN", "_on_Lasers_BTN_toggled")
 		set_process_unhandled_input(false)
@@ -214,7 +221,10 @@ func _on_freelook_exit() -> void:
 
 func _on_ship_added(ship : Ship):
 	if ship.faction == faction:
+		var nidx = _ships.size()
 		_ships.append(ship)
+		_ships[nidx].enable_update_sensor_mask = true
+		_ships[nidx].update_sensor_mask()
 		if _ship_idx < 0:
 			_ship_idx = 0
 			_focus_ship()
@@ -275,15 +285,17 @@ func _on_structure_change(struct : int, max_structure : int, comp : String, conn
 func _on_ordered(ordered : bool, comp : String) -> void:
 	match comp:
 		"SublightEngine":
-			var btn = get_node("HBC/Info/Commands/Buttons/Sublight_BTN")
-			btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
-			btn.pressed = ordered
-			btn.connect("toggled", self, "_on_Sublight_BTN_toggled")
+			_SetVisToggle(ordered, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
+			#var btn = get_node("HBC/Info/Engines/Sublight_BTN")
+			#btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
+			#btn.pressed = ordered
+			#btn.connect("toggled", self, "_on_Sublight_BTN_toggled")
 		"ManeuverEngine":
-			var btn = get_node("HBC/Info/Commands/Buttons/Manuvers_BTN")
-			btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
-			btn.pressed = ordered
-			btn.connect("toggled", self, "_on_Manuvers_BTN_toggled")
+			_SetVisToggle(ordered, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+			#var btn = get_node("HBC/Info/Maneuver/Manuvers_BTN")
+			#btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
+			#btn.pressed = ordered
+			#btn.connect("toggled", self, "_on_Manuvers_BTN_toggled")
 
 func _on_power_change(available : int, total : int) -> void:
 	if power:
@@ -300,15 +312,19 @@ func _on_maneuver_stats_change(degrees : float, turns_to_trigger : int) -> void:
 		maneuver.get_node("Degrees").text = String(int(degrees))
 		maneuver.get_node("Turns").text = String(turns_to_trigger)
 
+func _on_sensor_stats_change(short_radius : int, long_radius : int) -> void:
+	return
+
 func _on_Sublight_BTN_toggled(button_pressed):
 	if _ship_idx >= 0:
 		var ship : Ship = _ships[_ship_idx]
 		if button_pressed:
 			if not ship.command("SublightEngine"):
-				var btn = get_node("HBC/Info/Commands/Buttons/Sublight_BTN")
-				btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
-				btn.pressed = false
-				btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
+				_SetVisToggle(false, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
+				#var btn = get_node("HBC/Info/Commands/Buttons/Sublight_BTN")
+				#btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
+				#btn.pressed = false
+				#btn.disconnect("toggled", self, "_on_Sublight_BTN_toggled")
 		else:
 			ship.belay("SublightEngine")
 
@@ -317,11 +333,14 @@ func _on_Manuvers_BTN_toggled(button_pressed):
 	if _ship_idx >= 0:
 		var ship : Ship = _ships[_ship_idx]
 		if button_pressed:
-			if not ship.command("ManeuverEngine"):
-				var btn = get_node("HBC/Info/Commands/Buttons/Manuvers_BTN")
-				btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
-				btn.pressed = false
-				btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
+			set_process_unhandled_input(false)
+			emit_signal("request_maneuver_direction")
+			#if not ship.command("ManeuverEngine"):
+			#	_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+				#var btn = get_node("HBC/Info/Commands/Buttons/Manuvers_BTN")
+				#btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
+				#btn.pressed = false
+				#btn.disconnect("toggled", self, "_on_Manuvers_BTN_toggled")
 		else:
 			ship.belay("ManeuverEngine")
 
@@ -333,3 +352,13 @@ func _on_Lasers_BTN_toggled(button_pressed):
 func _on_Missile_BTN_toggled(button_pressed):
 	pass # Replace with function body.
 
+func _on_maneuver(dir):
+	var ship : Ship = _ships[_ship_idx]
+	var cmd = "ManeuverEngine"
+	if dir < 0:
+		cmd += "_L"
+	elif dir > 0:
+		cmd += "_R"
+	if dir == 0 or not ship.command(cmd):
+		_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+	set_process_unhandled_input(true)

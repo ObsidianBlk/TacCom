@@ -32,7 +32,7 @@ _global_script_classes=[ {
 "base": "PoweredComponent",
 "class": "ManeuverEngine",
 "language": "GDScript",
-"path": "res://ManeuverEngine.gd"
+"path": "res://Object/Ship/Components/ManeuverEngine.gd"
 }, {
 "base": "ShipComponent",
 "class": "PoweredComponent",
@@ -48,6 +48,11 @@ _global_script_classes=[ {
 "class": "Region",
 "language": "GDScript",
 "path": "res://Scenes/Region/Region.gd"
+}, {
+"base": "PoweredComponent",
+"class": "Sensor",
+"language": "GDScript",
+"path": "res://Object/Ship/Components/Sensor.gd"
 }, {
 "base": "Node2D",
 "class": "Ship",
@@ -73,6 +78,7 @@ _global_script_class_icons={
 "PoweredComponent": "",
 "PriorityQueue": "",
 "Region": "",
+"Sensor": "",
 "Ship": "",
 "ShipComponent": "",
 "SublightEngine": ""

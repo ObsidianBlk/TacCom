@@ -1,46 +1,51 @@
 extends PoweredComponent
-class_name SublightEngine
+class_name ManeuverEngine
 
 
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-signal sublight_propulsion(units)
-signal sublight_stats_change(propulsion_units, turns_to_trigger)
+signal maneuver(degrees)
+signal maneuver_stats_change(degrees, turns_to_trigger)
 signal ordered(o)
 
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
-var _propulsion_units : int = 1
+var _degrees : float = 60.0
 var _turns_to_trigger : int = 1
 var _turns_passed : int = 0
-var _ordered : bool = false
+var _dir = 0
+
 
 # -----------------------------------------------------------
 # Override Methods
 # -----------------------------------------------------------
 
 func _init(info : Dictionary).(info) -> void:
-	if "propulsion_units" in info:
-		_propulsion_units = info.propulsion_units
+	if "degrees" in info:
+		_degrees = _DegreesInBounds(info.degrees)
 	if "turns_to_trigger" in info:
 		_turns_to_trigger = info.turns_to_trigger
-	call_deferred("emit_signal", "sublight_stats_change", _propulsion_units, _turns_to_trigger)
-	#emit_signal("sublight_stats_change", _propulsion_units, _turns_to_trigger)
+	call_deferred("emit_signal", "maneuver_stats_change", _degrees, _turns_to_trigger)
 
 # -----------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------
-
+func _DegreesInBounds(d : float) -> float:
+	while d < 0:
+		d += 360
+	while d >= 360:
+		d -= 360
+	return d
 
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
 func report_info() -> void:
 	if not _processing:
-		emit_signal("sublight_stats_change", _propulsion_units, _turns_to_trigger)
-		emit_signal("ordered", _ordered)
+		emit_signal("maneuver_stats_change", _degrees, _turns_to_trigger)
+		emit_signal("ordered", _dir != 0)
 		.report_info()
 
 
@@ -50,9 +55,10 @@ func process_turn() -> void:
 			_turns_passed += 1
 			if _turns_passed == _turns_to_trigger:
 				_turns_passed = 0
-				emit_signal("sublight_propulsion", _propulsion_units)
+				var deg = _dir * _degrees
+				emit_signal("maneuver", deg)
 				emit_signal("release_power")
-				_ordered = false
+				_dir = 0
 		else:
 			_turns_passed = max(_turns_passed - 1, 0)
 		
@@ -63,10 +69,13 @@ func process_turn() -> void:
 
 func command(order : String) -> bool:
 	if not _processing:
-		if order == "SublightEngine":
-			_ordered = true
+		if order == "ManeuverEngine_L":
+			_dir = 1
+		elif order == "ManeuverEngine_R":
+			_dir = -1
+		if _dir != 0:
 			emit_signal("pull_power", _power_required)
-			emit_signal("ordered", _ordered)
+			emit_signal("ordered", _dir != 0)
 			return true
 		return .command(order)
 	return false
@@ -74,13 +83,7 @@ func command(order : String) -> bool:
 
 func belay(order : String) -> void:
 	if not _processing:
-		_ordered = false
+		_dir = 0
 		emit_signal("release_power")
-		emit_signal("ordered", _ordered)
+		emit_signal("ordered", false)
 		.belay(order)
-
-
-# -----------------------------------------------------------
-# Handler Methods
-# -----------------------------------------------------------
-
