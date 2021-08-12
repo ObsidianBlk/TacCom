@@ -41,6 +41,7 @@ func _add_ship_to_region(coord : Vector2) -> void:
 		"Command":{
 			"structure":"fore",
 			"info":{
+				"priority":10,
 				"structure":30,
 				"defense":[30, 0, 10],
 				"commands":2
@@ -49,6 +50,7 @@ func _add_ship_to_region(coord : Vector2) -> void:
 		"Engineering":{
 			"structure":"mid",
 			"info": {
+				"priority":10,
 				"structure":30,
 				"defense":[30,0,10],
 				"power":4
@@ -57,6 +59,7 @@ func _add_ship_to_region(coord : Vector2) -> void:
 		"SublightEngine":{
 			"structure":"aft",
 			"info":{
+				"priority":1,
 				"structure":30,
 				"defense":[30,0,10],
 				"power_required":1,
@@ -67,16 +70,18 @@ func _add_ship_to_region(coord : Vector2) -> void:
 		"ManeuverEngine":{
 			"structure":"fore",
 			"info":{
+				"priority":5,
 				"structure":30,
 				"defense":[30,0,10],
 				"power_required":1,
-				"degrees":60,
+				"units_per_turn": 2,
 				"turns_to_trigger":1
 			}
 		},
 		"Sensors":{
 			"structure":"fore",
 			"info":{
+				"priority":9,
 				"structure":30,
 				"defense":[30,0,10],
 				"power_required":1,

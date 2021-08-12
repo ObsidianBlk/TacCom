@@ -40,7 +40,7 @@ func process_turn() -> void:
 		# TODO: Handle Crew at this point...
 		.process_turn()
 
-func command(order : String) -> bool:
+func command(order : String, detail = null) -> bool:
 	if not _processing:
 		# Don't care the order, we loose an available command point
 		# if one's available
@@ -49,7 +49,7 @@ func command(order : String) -> bool:
 			emit_signal("commands_change", _available, _total)
 		else:
 			call_deferred("emit_signal", "invalid_command", order)
-		return .command(order)
+		return .command(order, detail)
 	return false
 
 func belay(order : String) -> void:

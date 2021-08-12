@@ -12,10 +12,12 @@ signal ordered(o)
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
-var _degrees : float = 60.0
+var _degrees_per_unit : float = 60.0
+var _units_per_turn : int = 1
 var _turns_to_trigger : int = 1
 var _turns_passed : int = 0
 var _dir = 0
+var _amount : float = 0.0
 
 
 # -----------------------------------------------------------
@@ -23,11 +25,11 @@ var _dir = 0
 # -----------------------------------------------------------
 
 func _init(info : Dictionary).(info) -> void:
-	if "degrees" in info:
-		_degrees = _DegreesInBounds(info.degrees)
+	if "units_per_turn" in info:
+		_units_per_turn = max(1, min(info.units_per_turn, 3))
 	if "turns_to_trigger" in info:
 		_turns_to_trigger = info.turns_to_trigger
-	call_deferred("emit_signal", "maneuver_stats_change", _degrees, _turns_to_trigger)
+	call_deferred("emit_signal", "maneuver_stats_change", _units_per_turn * _degrees_per_unit, _turns_to_trigger)
 
 # -----------------------------------------------------------
 # Private Methods
@@ -44,7 +46,7 @@ func _DegreesInBounds(d : float) -> float:
 # -----------------------------------------------------------
 func report_info() -> void:
 	if not _processing:
-		emit_signal("maneuver_stats_change", _degrees, _turns_to_trigger)
+		emit_signal("maneuver_stats_change", _units_per_turn * _degrees_per_unit, _turns_to_trigger)
 		emit_signal("ordered", _dir != 0)
 		.report_info()
 
@@ -55,8 +57,7 @@ func process_turn() -> void:
 			_turns_passed += 1
 			if _turns_passed == _turns_to_trigger:
 				_turns_passed = 0
-				var deg = _dir * _degrees
-				emit_signal("maneuver", deg)
+				emit_signal("maneuver", _amount)
 				emit_signal("release_power")
 				_dir = 0
 		else:
@@ -67,24 +68,26 @@ func process_turn() -> void:
 		.process_turn()
 
 
-func command(order : String) -> bool:
+func command(order : String, detail = null) -> bool:
 	if not _processing:
-		if order in ["ManeuverEngine_L", "ManeuverEngine_R"] and _dir == 0:
-			if order == "ManeuverEngine_L":
+		if order == "ManeuverEngine" and _dir == 0 and detail != null:
+			if detail > 0:
 				_dir = 1
-			elif order == "ManeuverEngine_R":
+			elif detail < 0:
 				_dir = -1
 			if _dir != 0:
+				_amount = _degrees_per_unit * max(0, min(abs(detail), _units_per_turn))
+				_amount *= _dir
 				emit_signal("pull_power", _power_required)
 				emit_signal("ordered", _dir != 0)
 				return true
-		return .command(order)
+		return .command(order, detail)
 	return false
 
 
 func belay(order : String) -> void:
 	if not _processing:
-		if _dir != 0 and order in ["ManeuverEngine_L", "ManeuverEngine_R", "ManeuverEngine"]:
+		if _dir != 0 and order == "ManeuverEngine":
 			_dir = 0
 			emit_signal("release_power")
 			emit_signal("ordered", false)

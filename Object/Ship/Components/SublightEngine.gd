@@ -61,14 +61,14 @@ func process_turn() -> void:
 		.process_turn()
 
 
-func command(order : String) -> bool:
+func command(order : String, detail = null) -> bool:
 	if not _processing:
 		if order == "SublightEngine":
 			_ordered = true
 			emit_signal("pull_power", _power_required)
 			emit_signal("ordered", _ordered)
 			return true
-		return .command(order)
+		return .command(order, detail)
 	return false
 
 

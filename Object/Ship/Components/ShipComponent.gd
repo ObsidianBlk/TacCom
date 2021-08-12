@@ -51,6 +51,13 @@ func _init(info : Dictionary) -> void:
 					_radiation_defense = info.defense[i]
 
 # -----------------------------------------------------------
+# Private Methods
+# -----------------------------------------------------------
+
+func _handle_damage(k : float, e : float, r : float) -> void:
+	print("Component Handler Called")
+
+# -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
 
@@ -95,12 +102,12 @@ func report_info() -> void:
 			c.report_info()
 		_processing = false
 
-func command(order : String) -> bool:
+func command(order : String, detail = null) -> bool:
 	if not _processing:
 		_processing = true
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
-			if c.command(order):
+			if c.command(order, detail):
 				_processing = false
 				return true
 		_processing = false
@@ -122,6 +129,15 @@ func process_turn() -> void:
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
 			c.process_turn()
+		_processing = false
+
+func damage(kinetic : float, energy : float, radiation : float) -> void:
+	if not _processing:
+		_processing = true
+		_handle_damage(kinetic, energy, radiation)
+		for i in range(_connections.size()):
+			var c = _connections.peek_value(i)
+			c.damage(kinetic, energy, radiation)
 		_processing = false
 
 # -----------------------------------------------------------

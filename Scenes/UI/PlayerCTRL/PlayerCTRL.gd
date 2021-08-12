@@ -6,10 +6,10 @@ extends Control
 # -----------------------------------------------------------
 signal process_complete
 signal freelook(c)
-signal request_maneuver_direction
 
 
 enum PROCESS_STATE {FOCUS=0, PROCESS=1, END=2}
+enum FREELOOK_MODE {NORMAL=0, MANEUVER=1}
 
 # -----------------------------------------------------------
 # Exports
@@ -27,6 +27,8 @@ var region_node : Region = null
 var cur = null
 var queue = {}
 var showing_hud = false
+
+var _freelook_mode = FREELOOK_MODE.NORMAL
 
 var _ships = []
 var _ship_idx = -1
@@ -101,13 +103,7 @@ func _ready() -> void:
 
 func _unhandled_input(event):
 	if event.is_action_pressed("freelook", false):
-		set_process_unhandled_input(false)
-		if showing_hud:
-			_on_toggle_hud()
-		if _ship_idx >= 0:
-			emit_signal("freelook", _ships[_ship_idx].coord)
-		else:
-			emit_signal("freelook", Vector2.ZERO)
+		_freelook(FREELOOK_MODE.NORMAL)
 	if event.is_action_pressed("show_info", false):
 		_on_toggle_hud()
 	if event.is_action_pressed("next_ship", false):
@@ -143,6 +139,16 @@ func _process(delta : float) -> void:
 # -----------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------
+func _freelook(mode : int) -> void:
+	_freelook_mode = mode
+	set_process_unhandled_input(false)
+	if showing_hud:
+		_on_toggle_hud()
+	if _ship_idx >= 0:
+		emit_signal("freelook", _ships[_ship_idx].coord)
+	else:
+		emit_signal("freelook", Vector2.ZERO)
+
 func _next_ship() -> void:
 	if _ship_idx >= 0:
 		_unfocus_ship()
@@ -173,7 +179,7 @@ func _unfocus_ship() -> void:
 		_DisconnectShip(ship, "structure_change", self, "_on_structure_change")
 		_DisconnectShip(ship, "ordered", self, "_on_ordered")
 		_DisconnectShip(ship, "commands_change", self, "_on_commands_change")
-		_DisconnectShip(ship, "Invalid_command", self, "_on_invalid_command")
+		_DisconnectShip(ship, "invalid_command", self, "_on_invalid_command")
 		_DisconnectShip(ship, "power_change", self, "_on_power_change")
 		_DisconnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_DisconnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
@@ -185,7 +191,7 @@ func _focus_ship() -> void:
 		_ConnectShip(ship, "structure_change", self, "_on_structure_change")
 		_ConnectShip(ship, "ordered", self, "_on_ordered")
 		_ConnectShip(ship, "commands_change", self, "_on_commands_change")
-		_ConnectShip(ship, "Invalid_command", self, "_on_invalid_command")
+		_ConnectShip(ship, "invalid_command", self, "_on_invalid_command")
 		_ConnectShip(ship, "power_change", self, "_on_power_change")
 		_ConnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_ConnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
@@ -238,12 +244,36 @@ func _on_process_turn() -> void:
 		set_process_unhandled_input(false)
 		set_process(true)
 
-func _on_freelook_exit() -> void:
+func _on_freelook_exit(c : Vector2, confirm : bool) -> void:
 	if not showing_hud:
 		_on_toggle_hud()
-	set_process_unhandled_input(true)
 	if _ship_idx >= 0 and region_node != null:
 		region_node.set_target_node(_ships[_ship_idx])
+	
+	match _freelook_mode:
+		FREELOOK_MODE.NORMAL:
+			pass
+		FREELOOK_MODE.MANEUVER:
+			print("Confirm: ", confirm)
+			if confirm:
+				var ship : Ship = _ships[_ship_idx]
+				var me = ship.relative_edge_from_coord(c)
+				var dir = 0
+				if me == Hexmap.EDGE.LEFT_UP or me == Hexmap.EDGE.LEFT_DOWN:
+					dir = 1 if me == Hexmap.EDGE.LEFT_UP else 2
+				elif me == Hexmap.EDGE.RIGHT_UP or me == Hexmap.EDGE.RIGHT_DOWN:
+					dir = -1 if me == Hexmap.EDGE.RIGHT_UP else -2
+				elif me == Hexmap.EDGE.DOWN:
+					dir = 3
+				#print("Freelook direction: ", dir, " | Freelook Edge: ", me)
+				print("Maneuver Direction: ", dir)
+				if dir == 0 or not ship.command("ManeuverEngine", dir):
+					print("Maneuver command failed")
+					_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+			else:
+				print("Cancel")
+				_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+	set_process_unhandled_input(true)
 
 
 func _on_ship_added(ship : Ship):
@@ -371,8 +401,10 @@ func _on_Manuvers_BTN_toggled(button_pressed):
 	if _ship_idx >= 0:
 		var ship : Ship = _ships[_ship_idx]
 		if button_pressed:
-			set_process_unhandled_input(false)
-			emit_signal("request_maneuver_direction")
+			var fo = get_focus_owner()
+			if fo:
+				fo.release_focus()
+			_freelook(FREELOOK_MODE.MANEUVER)
 		else:
 			ship.belay("ManeuverEngine")
 
@@ -383,17 +415,6 @@ func _on_Lasers_BTN_toggled(button_pressed):
 
 func _on_Missile_BTN_toggled(button_pressed):
 	pass # Replace with function body.
-
-func _on_maneuver(dir):
-	var ship : Ship = _ships[_ship_idx]
-	var cmd = "ManeuverEngine"
-	if dir < 0:
-		cmd += "_L"
-	elif dir > 0:
-		cmd += "_R"
-	if dir == 0 or not ship.command(cmd):
-		_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
-	set_process_unhandled_input(true)
 
 
 func _on_Sensors_BTN_toggled(button_pressed):

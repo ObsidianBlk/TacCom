@@ -24,6 +24,13 @@ func _init(info : Dictionary).(info) -> void:
 		call_deferred("emit_signal", "power_change", _available_power, _max_power)
 
 # -----------------------------------------------------------
+# Private Methods
+# -----------------------------------------------------------
+
+func _handle_damage(k : float, e : float, r : float) -> void:
+	print("Engineering Handler Called")
+
+# -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
 

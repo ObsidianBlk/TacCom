@@ -4,7 +4,7 @@ extends Entity
 # Signals
 # -----------------------------------------------------------
 
-signal freelook_exit
+signal freelook_exit(c, confirm)
 
 # -----------------------------------------------------------
 # Variables
@@ -60,7 +60,11 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel", false):
 		visible = false
 		set_process_unhandled_input(false)
-		emit_signal("freelook_exit")
+		emit_signal("freelook_exit", coord, false)
+	if event.is_action_pressed("ui_accept", false):
+		visible = false
+		set_process_unhandled_input(false)
+		emit_signal("freelook_exit", coord, true)
 
 # -----------------------------------------------------------
 # Private Methods

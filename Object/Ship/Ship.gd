@@ -184,6 +184,18 @@ func _RedrawHealthBar(structure : float, max_structure : float) -> void:
 		struct = floor(structure / max_structure)
 	update()
 
+func _wrapRange(v : float, minV : float, maxV : float, maxInclusive : bool = false) -> float:
+	var d = maxV - minV
+	while v < minV:
+		v += d
+	if maxInclusive:
+		while v > maxV:
+			v -= d
+	else:
+		while v >= maxV:
+			v -= d
+	return v
+
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
@@ -266,6 +278,30 @@ func facing_edge() -> int:
 		return Hexmap.EDGE.RIGHT_UP
 	return -1
 
+func edge_from_coord(c : Vector2) -> int:
+	if c != coord:
+		var cpos = hexmap_node.coord_to_world(c)
+		var angle = 360 - _wrapRange(rad2deg(position.angle_to_point(cpos)) -90.0, 0.0, 360.0)
+		if (angle >= 330 and angle < 360) or (angle >= 0 and angle < 30):
+			return Hexmap.EDGE.UP
+		elif angle >= 30 and angle < 90:
+			return Hexmap.EDGE.LEFT_UP
+		elif angle >= 90 and angle < 150:
+			return Hexmap.EDGE.LEFT_DOWN
+		elif angle >= 150 and angle < 210:
+			return Hexmap.EDGE.DOWN
+		elif angle >= 210 and angle < 270:
+			return Hexmap.EDGE.RIGHT_DOWN
+		elif angle > 270 and angle < 330:
+			return Hexmap.EDGE.RIGHT_UP
+	return -1
+
+func relative_edge_from_coord(c : Vector2) -> int:
+	var fe = facing_edge()
+	var ce = edge_from_coord(c)
+	var re = ce - fe
+	return (re + (6 if re < 0 else 0))
+
 func shift_to_facing(units : int = 1) -> void:
 	if hexmap_node:
 		for _i in range(units):
@@ -295,9 +331,9 @@ func report_info() -> void:
 	emit_signal("structure_change", info.structure, info.max_structure, "Ship", "")
 	mid_structure.report_info()
 
-func command(order : String) -> bool:
+func command(order : String, detail = null) -> bool:
 	if commands_available > 0:
-		return mid_structure.command(order)
+		return mid_structure.command(order, detail)
 	return false
 
 func belay(order : String) -> void:
