@@ -105,6 +105,7 @@ config/icon="res://icon.png"
 [autoload]
 
 Factions="*res://Scripts/Autos/Factions.gd"
+TacCom="*res://Scripts/Autos/TacCom.gd"
 
 [display]
 

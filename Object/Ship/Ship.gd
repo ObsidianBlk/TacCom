@@ -324,6 +324,8 @@ func update_sensor_mask() -> void:
 				sensor_state_changed = true
 			sensor_mask_cells = hexmap_node.get_cells_at_distance_from_coord(coord, dist, true)
 			hexmap_node.set_mask_coords(sensor_mask_cells)
+		else:
+			hexmap_node.set_coord_mask(coord)
 
 
 func report_info() -> void:

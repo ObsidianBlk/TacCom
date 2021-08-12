@@ -6,6 +6,7 @@ class_name ShipComponent
 # Signals
 # -----------------------------------------------------------
 signal structure_change(old_structure, new_structure, max_structure)
+signal damage_blowback(type, amount)
 
 
 # -----------------------------------------------------------
@@ -17,6 +18,7 @@ signal structure_change(old_structure, new_structure, max_structure)
 # Variables
 # -----------------------------------------------------------
 var _processing = false
+var _immortal = false
 var _job_type = Crewman.TYPE.GENERAL
 var _connections : PriorityQueue = PriorityQueue.new()
 var _priority : float = 0
@@ -36,6 +38,9 @@ func _init(info : Dictionary) -> void:
 	if "priority" in info:
 		_priority = info.priority
 	
+	if "immortal" in info:
+		_immortal = not (info.immortal == false)
+	
 	if "structure" in info:
 		_max_structure = info.structure
 		_structure = _max_structure
@@ -54,8 +59,34 @@ func _init(info : Dictionary) -> void:
 # Private Methods
 # -----------------------------------------------------------
 
-func _handle_damage(k : float, e : float, r : float) -> void:
-	print("Component Handler Called")
+func _KineticDefense() -> float:
+	return _kinetic_defense / 100
+
+func _EnergyDefense() -> float:
+	return _energy_defense / 100
+
+func _RadiationDefense() -> float:
+	return _radiation_defense / 100
+
+func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> void:
+	var ostruct = _structure
+	match type:
+		TacCom.DAMAGE_TYPE.KINETIC:
+			var dmg = amount - (amount * _KineticDefense())
+			_structure -= dmg
+			if emitBlowback and (_structure / ostruct) < 0.75:
+				print("Kinetic Blockback! ", _structure, "/", ostruct, "=", (_structure/ostruct))
+				emit_signal("damage_blowback", type, dmg * 0.1)
+		TacCom.DAMAGE_TYPE.ENERGY:
+			var dmg = amount - (amount * _EnergyDefense())
+			_structure = max(0, _structure - (_structure * (dmg / 200)))
+			if emitBlowback and (_structure / ostruct) < 0.75:
+				print("Energy Blockback! ", _structure, "/", ostruct, "=", (_structure/ostruct))
+				emit_signal("damage_blowback", TacCom.DAMAGE_TYPE.KINETIC, (ostruct - _structure) * 0.5)
+		TacCom.DAMAGE_TYPE.RADIATION:
+			print("Radiation detected... thankfully nothing is affected by this at the moment!")
+	emit_signal("structure_change", ostruct, _structure, _max_structure)
+	
 
 # -----------------------------------------------------------
 # Public Methods
@@ -93,6 +124,14 @@ func get_structure_percent() -> float:
 	var si = get_structure()
 	return si.structure / si.max_structure
 
+func set_destroyed() -> void:
+	var ostruct = _structure
+	_structure = 0
+	emit_signal("structure_change", ostruct, _structure, _max_structure)
+
+func is_operating() -> bool:
+	return _structure > 0 or _immortal
+
 func report_info() -> void:
 	if not _processing:
 		_processing = true
@@ -107,9 +146,10 @@ func command(order : String, detail = null) -> bool:
 		_processing = true
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
-			if c.command(order, detail):
-				_processing = false
-				return true
+			if c.is_operating():
+				if c.command(order, detail):
+					_processing = false
+					return true
 		_processing = false
 	return false
 
@@ -118,26 +158,36 @@ func belay(order : String) -> void:
 		_processing = true
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
-			c.belay(order)
+			if c.is_operating():
+				c.belay(order)
 		_processing = false
 
 func process_turn() -> void:
 	if not _processing:
 		_processing = true
-		# This method should be overridden to handle what a component will do
-		# after the player clicks the "end turn" button
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
-			c.process_turn()
+			if c.is_operating():
+				c.process_turn()
 		_processing = false
 
-func damage(kinetic : float, energy : float, radiation : float) -> void:
+func damage(type : int, amount : float) -> void:
 	if not _processing:
 		_processing = true
-		_handle_damage(kinetic, energy, radiation)
+		var operational = []
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
-			c.damage(kinetic, energy, radiation)
+			if c.is_operating():
+				operational.append(c)
+		
+		if operational.size() > 0:
+			if _structure > 0:
+				_handle_damage(type, amount * 0.5)
+			amount = (amount * 0.5) / operational.size()
+			for c in operational:
+				c.damage(type, amount)
+		elif _structure > 0:
+			_handle_damage(type, amount)
 		_processing = false
 
 # -----------------------------------------------------------
@@ -147,3 +197,5 @@ func damage(kinetic : float, energy : float, radiation : float) -> void:
 func _on_connected_structure_change(old_structure : float, new_structure : float, max_structure : float, component : ShipComponent) -> void:
 	pass
 
+func _on_damage_blowback(type : int, amount : float) -> void:
+	_handle_damage(type, amount)

@@ -33,6 +33,21 @@ func _init(info : Dictionary).(info) -> void:
 
 
 # -----------------------------------------------------------
+# Private Methods
+# -----------------------------------------------------------
+
+func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> void:
+	var ostruct = _structure
+	._handle_damage(type, amount, emitBlowback)
+	if (_structure / ostruct) < 0.75 and _radius.short > 1:
+		if _radius.long > 0:
+			_radius.long -= 1
+		else:
+			_radius.short -= 1
+		emit_signal("sensor_stats_change", _radius.short, _radius.long)
+
+
+# -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
 func report_info() -> void:

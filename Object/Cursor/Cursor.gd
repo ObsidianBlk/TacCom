@@ -46,17 +46,17 @@ func _ready() -> void:
 
 func _unhandled_input(event):
 	if event.is_action_pressed("up", false):
-		shift_to_edge(Hexmap.EDGE.UP)
+		shift_to_edge(Hexmap.EDGE.UP, true)
 	if event.is_action_pressed("up_left", false):
-		shift_to_edge(Hexmap.EDGE.LEFT_UP)
+		shift_to_edge(Hexmap.EDGE.LEFT_UP, true)
 	if event.is_action_pressed("down_left", false):
-		shift_to_edge(Hexmap.EDGE.LEFT_DOWN)
+		shift_to_edge(Hexmap.EDGE.LEFT_DOWN, true)
 	if event.is_action_pressed("down", false):
-		shift_to_edge(Hexmap.EDGE.DOWN)
+		shift_to_edge(Hexmap.EDGE.DOWN, true)
 	if event.is_action_pressed("down_right", false):
-		shift_to_edge(Hexmap.EDGE.RIGHT_DOWN)
+		shift_to_edge(Hexmap.EDGE.RIGHT_DOWN, true)
 	if event.is_action_pressed("up_right", false):
-		shift_to_edge(Hexmap.EDGE.RIGHT_UP)
+		shift_to_edge(Hexmap.EDGE.RIGHT_UP, true)
 	if event.is_action_pressed("ui_cancel", false):
 		visible = false
 		set_process_unhandled_input(false)
@@ -96,3 +96,6 @@ func _on_freelook(c : Vector2) -> void:
 	var parent = get_parent()
 	if parent is Region:
 		parent.set_target_node(self)
+
+func _on_masking_changed() -> void:
+	pass # This is to ignore the hexmap masking visibility effect.

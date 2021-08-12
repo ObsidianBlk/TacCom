@@ -21,6 +21,7 @@ func _ready() -> void:
 func _add_ships() -> void:
 	var ast = Ast_Node.instance()
 	if ast:
+		ast.name = "Asteroid"
 		region.add_env(ast)
 		ast.coord = Vector2(5, 0)
 	

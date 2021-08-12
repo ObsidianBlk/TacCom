@@ -5,7 +5,7 @@ class_name Hexmap
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-
+signal masking_changed()
 
 # -----------------------------------------------------------
 # Constants and ENUMs
@@ -286,11 +286,13 @@ func clear_highlight_coords(coords : Array) -> void:
 func clear_highlights() -> void:
 	_highlights = {}
 
-func set_cell_mask(c : int, r : int) -> void:
+func set_cell_mask(c : int, r : int, emitChange : bool = true) -> void:
 	var coord = Vector2(c, r)
 	if not coord in _mask:
 		_mask[coord] = 0
 	_mask[coord] += 1
+	if emitChange:
+		emit_signal("masking_changed")
 
 func set_coord_mask(coord : Vector2) -> void:
 	set_cell_mask(int(coord.x), int(coord.y))
@@ -298,7 +300,8 @@ func set_coord_mask(coord : Vector2) -> void:
 func set_mask_coords(coord_list : Array) -> void:
 	for coord in coord_list:
 		if coord is Vector2:
-			set_cell_mask(int(coord.x), int(coord.y))
+			set_cell_mask(int(coord.x), int(coord.y), false)
+	emit_signal("masking_changed")
 
 func is_cell_masked(c : int, r : int) -> bool:
 	if _mask.keys().size() > 0:
@@ -308,13 +311,15 @@ func is_cell_masked(c : int, r : int) -> bool:
 func is_coord_masked(coord : Vector2) -> bool:
 	return is_cell_masked(int(coord.x), int(coord.y))
 
-func clear_cell_mask(c : int, r : int) -> void:
+func clear_cell_mask(c : int, r : int, emitChanged : bool = true) -> void:
 	var coord = Vector2(c, r)
 	if coord in _mask:
 		if _mask[coord] > 1:
 			_mask[coord] -= 1
 		else:
 			_mask.erase(coord)
+			if emitChanged:
+				emit_signal("masking_changed")
 
 
 func clear_coord_mask(coord : Vector2) -> void:
@@ -324,11 +329,13 @@ func clear_coord_mask(coord : Vector2) -> void:
 func clear_mask_coords(coord_list : Array) -> void:
 	for coord in coord_list:
 		if coord is Vector2:
-			clear_cell_mask(int(coord.x), int(coord.y))
+			clear_cell_mask(int(coord.x), int(coord.y), false)
+	emit_signal("masking_changed")
 
 
 func clear_mask() -> void:
 	_mask = {}
+	emit_signal("masking_changed")
 
 
 func get_cells_at_distance(c : int, r : int, radius : int, inclusive : bool = false) -> Array:
@@ -343,7 +350,7 @@ func get_cells_at_distance(c : int, r : int, radius : int, inclusive : bool = fa
 			cells.append(Vector2(cell.c, cell.r))
 		if cell.d < radius:
 			for e in EDGE.keys():
-				var ncoord = get_neighbor_coord(Vector2(cell.c, cell.r), EDGE[e])
+				var ncoord = get_neighbor_coord(Vector2(cell.c, cell.r), EDGE[e], true)
 				var key = "%sx%s"%[ncoord.x, ncoord.y]
 				if not key in handled:
 					tagged.append({"c":ncoord.x, "r":ncoord.y, "d": cell.d + 1})

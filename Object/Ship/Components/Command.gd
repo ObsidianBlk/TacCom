@@ -11,17 +11,32 @@ signal invalid_command(order)
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
-var _total
-var _available
+var _max = 1
+var _total = 1
+var _available = 1
 
 # -----------------------------------------------------------
 # Override Methods
 # -----------------------------------------------------------
 func _init(info : Dictionary).(info) -> void:
 	if "commands" in info:
+		_max = info.commands
 		_total = info.commands
 		_available = _total
 		call_deferred("emit_signal", "commands_change", _available, _total)
+
+
+# -----------------------------------------------------------
+# Private Methods
+# -----------------------------------------------------------
+
+func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> void:
+	var ostruct = _structure
+	._handle_damage(type, amount, emitBlowback)
+	if (_structure / ostruct) < 0.75 and _total > 0:
+		_total -= 1
+		_available = min(_available, _total)
+		emit_signal("commands_change", _available, _total)
 
 
 # -----------------------------------------------------------

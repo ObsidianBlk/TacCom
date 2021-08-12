@@ -1,0 +1,4 @@
+extends Node
+
+
+enum DAMAGE_TYPE {KINETIC=0, ENERGY=1, RADIATION=2}
