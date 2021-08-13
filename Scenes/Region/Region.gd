@@ -77,7 +77,8 @@ func _remove_entity(ent : Entity, ent_container : Node2D, signal_name : String =
 	if ent_parent == ent_container:
 		ent_parent.remove_child(ent)
 		ent.clear_hexmap()
-		emit_signal(signal_name, ent)
+		if signal_name != "":
+			emit_signal(signal_name, ent)
 
 # -----------------------------------------------------------
 # Methods
@@ -112,6 +113,17 @@ func get_ships_in_faction(faction_name : String) -> Array:
 			if ship.is_in_group(faction_name):
 				sig.append(ship)
 	return sig
+
+func get_entity_at_coord(coord : Vector2):
+	for child in ship_container.children():
+		if child is Entity:
+			if child.coord == coord:
+				return child
+	for child in env_container.children():
+		if child is Entity:
+			if child.coord == coord:
+				return child
+	return null
 
 # -----------------------------------------------------------
 # Handler Methods

@@ -15,6 +15,9 @@ signal sublight_stats_change(propulsion_units, turns_to_trigger)
 signal maneuver_stats_change(degrees, turns_to_trigger)
 signal sensor_stats_change(short_radius, long_radius)
 
+signal animating
+signal animation_complete
+
 # -----------------------------------------------------------
 # Constants and Enums
 # -----------------------------------------------------------
@@ -48,6 +51,7 @@ var engineering : Engineering = null
 var construct_def = null
 
 var struct = 0
+var collision_value = 100
 var commands_available = 0
 var sensor_short = 0
 var sensor_long = 0
@@ -58,6 +62,7 @@ var sensor_mask_cells = []
 # Onready Variables
 # -----------------------------------------------------------
 
+onready var explosion = get_node("Explosion")
 
 # -----------------------------------------------------------
 # Setters/Getters
@@ -114,6 +119,10 @@ func set_facing(f : float) -> void:
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
+	if explosion:
+		print("We have an explosion")
+		explosion.connect("boom_over", self, "_on_anim_complete")
+		
 	sprite = get_node("Sprite")
 	if sprite:
 		sprite.texture = texture
@@ -305,7 +314,14 @@ func relative_edge_from_coord(c : Vector2) -> int:
 func shift_to_facing(units : int = 1) -> void:
 	if hexmap_node:
 		for _i in range(units):
-			set_coord(hexmap_node.get_neighbor_coord(coord, facing_edge()))
+			if hexmap_node.is_neighbor_coord_blocked(coord, facing_edge()):
+				var nc = hexmap_node.get_neighbor_coord(coord, facing_edge(), true)
+				var ent = hexmap_node.get_entity_at_coord(nc)
+				if ent is Entity:
+					ent.damage(TacCom.DAMAGE_TYPE.KINETIC, collision_value)
+					damage(TacCom.DAMAGE_TYPE.KINETIC, ent.collision_damage())
+			else:
+				set_coord(hexmap_node.get_neighbor_coord(coord, facing_edge()))
 
 func face_and_shift(deg : float, incremental : bool = false) -> void:
 	if hexmap_node:
@@ -348,12 +364,25 @@ func process_turn() -> void:
 		sensor_state_changed = false
 		update_sensor_mask()
 
+func damage(type : int, amount : float) -> void:
+	if amount > 0:
+		mid_structure.damage(type, amount)
+		if explosion:
+			emit_signal("animating")
+			explosion.boom()
+
+func collision_damage() -> float:
+	return collision_value
 
 # -----------------------------------------------------------
 # Handler Methods
 # -----------------------------------------------------------
+func _on_anim_complete() -> void:
+	emit_signal("animation_complete")
+
 func _on_structure_change(old_structure : int, new_structure : int, max_structure : int, comp : String, connection : String) -> void:
 		if comp == "Ship":
+			collision_value = new_structure * 0.5
 			_RedrawHealthBar(float(new_structure), float(max_structure))
 		emit_signal("structure_change", new_structure, max_structure, comp, connection)
 

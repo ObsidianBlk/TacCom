@@ -53,7 +53,7 @@ func report_info() -> void:
 
 func process_turn() -> void:
 	if not _processing:
-		if _power_available >= _power_required:
+		if _dir != 0 and _power_available >= _power_required:
 			_turns_passed += 1
 			if _turns_passed == _turns_to_trigger:
 				_turns_passed = 0

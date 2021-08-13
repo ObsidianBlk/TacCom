@@ -237,6 +237,10 @@ func get_neighbor_coord(coord : Vector2, edge : int, ignore_blocked : bool = fal
 				return nc
 	return coord
 
+func is_neighbor_coord_blocked(coord : Vector2, edge : int) -> bool:
+	var nc = get_neighbor_coord(coord, edge)
+	return nc == coord
+
 func set_cell_weight(c : int, r : int, weight : float) -> void:
 	_AssignCellInfo(Vector2(c, r), "weight", weight if weight > 1 else null)
 
@@ -418,6 +422,14 @@ func get_astar_path(from : Vector2, to : Vector2, min_weight : float = 1) -> Arr
 	
 	return cells
 
+
+func get_entity_at_coord(coord : Vector2):
+	# NOTE: This is a VERY jank method. Only exists because I do not have the time
+	#  to retool into a more elegant solution.
+	var parent = get_parent()
+	if parent and parent.has_method("get_entity_at_coord"):
+		return parent.get_entity_at_coord(coord)
+	return null
 
 func map_to_world(c : int, r : int) -> Vector2:
 	var x = float(c) * hex_offset.x

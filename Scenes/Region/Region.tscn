@@ -16,6 +16,6 @@ hex_color = Color( 0.294118, 0.470588, 0.309804, 0.784314 )
 [node name="Camera" type="Camera2D" parent="."]
 smoothing_enabled = true
 
-[node name="Ships" type="YSort" parent="."]
-
 [node name="Env" type="Node2D" parent="."]
+
+[node name="Ships" type="YSort" parent="."]

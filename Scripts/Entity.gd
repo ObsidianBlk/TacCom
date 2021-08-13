@@ -15,6 +15,7 @@ export var coord : Vector2 = Vector2.ZERO		setget set_coord
 # -----------------------------------------------------------
 # Variables
 # -----------------------------------------------------------
+var _blocking : bool = false
 var hexmap_node : Hexmap = null
 
 # -----------------------------------------------------------
@@ -26,9 +27,13 @@ var hexmap_node : Hexmap = null
 # Setters/Getters
 # -----------------------------------------------------------
 func set_coord(c : Vector2):
+	if hexmap_node and _blocking:
+		hexmap_node.set_coord_blocked(coord, false)
 	coord = Vector2(floor(c.x), floor(c.y))
 	if hexmap_node:
 		position = hexmap_node.coord_to_world(coord)
+		if _blocking:
+			hexmap_node.set_coord_blocked(coord, false)
 
 
 # -----------------------------------------------------------
@@ -45,8 +50,6 @@ func _ready() -> void:
 # -----------------------------------------------------------
 # Methods
 # -----------------------------------------------------------
-func end_turn() -> void:
-	pass # This should be overridden
 
 func set_hexmap(hexmap : Hexmap) -> void:
 	if hexmap_node != null:
@@ -66,6 +69,11 @@ func shift_to_edge(edge : int, ignore_blocked : bool = false) -> void:
 	if hexmap_node:
 		set_coord(hexmap_node.get_neighbor_coord(coord, edge, ignore_blocked))
 
+func damage(type : int, amount : float) -> void:
+	pass
+
+func collision_damage() -> float:
+	return 0.0
 
 # -----------------------------------------------------------
 # Handler Methods
