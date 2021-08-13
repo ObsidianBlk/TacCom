@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Shaders/Fragment/colorswap.shader" type="Shader" id=1]
 [ext_resource path="res://Assets/Graphics/Asteroid.png" type="Texture" id=2]
 [ext_resource path="res://Object/Asteroid/Asteroid.gd" type="Script" id=3]
+[ext_resource path="res://Object/Explosion/Explosion.tscn" type="PackedScene" id=4]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 1 )
@@ -55,3 +56,7 @@ hframes = 4
 [node name="Anim" type="AnimationPlayer" parent="."]
 autoplay = "Bob"
 anims/Bob = SubResource( 2 )
+
+[node name="Explosion" parent="." instance=ExtResource( 4 )]
+offset = Vector2( -6, -9 )
+size = Vector2( 14, 9 )

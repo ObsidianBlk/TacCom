@@ -40,6 +40,11 @@ _global_script_classes=[ {
 "path": "res://Scenes/Region/Hexmap.gd"
 }, {
 "base": "PoweredComponent",
+"class": "IonLance",
+"language": "GDScript",
+"path": "res://Object/Ship/Components/IonLance.gd"
+}, {
+"base": "PoweredComponent",
 "class": "ManeuverEngine",
 "language": "GDScript",
 "path": "res://Object/Ship/Components/ManeuverEngine.gd"
@@ -86,6 +91,7 @@ _global_script_class_icons={
 "Engineering": "",
 "Entity": "",
 "Hexmap": "",
+"IonLance": "",
 "ManeuverEngine": "",
 "PoweredComponent": "",
 "PriorityQueue": "",

@@ -14,6 +14,7 @@ signal power_change(available, total)
 signal sublight_stats_change(propulsion_units, turns_to_trigger)
 signal maneuver_stats_change(degrees, turns_to_trigger)
 signal sensor_stats_change(short_radius, long_radius)
+signal ionlance_stats_change(rng, dmg)
 
 signal animating
 signal animation_complete
@@ -122,7 +123,6 @@ func set_facing(f : float) -> void:
 # -----------------------------------------------------------
 func _ready() -> void:
 	if explosion:
-		print("We have an explosion")
 		explosion.connect("boom_over", self, "_on_anim_complete")
 		
 	sprite = get_node("Sprite")
@@ -192,20 +192,8 @@ func _swapFacing(edge : int):
 func _RedrawHealthBar(structure : float, max_structure : float) -> void:
 	struct = 0
 	if max_structure > 0:
-		struct = floor(structure / max_structure)
+		struct = structure / max_structure
 	update()
-
-func _wrapRange(v : float, minV : float, maxV : float, maxInclusive : bool = false) -> float:
-	var d = maxV - minV
-	while v < minV:
-		v += d
-	if maxInclusive:
-		while v > maxV:
-			v -= d
-	else:
-		while v >= maxV:
-			v -= d
-	return v
 
 # -----------------------------------------------------------
 # Public Methods
@@ -216,7 +204,7 @@ func construct_ship(def : Dictionary) -> void:
 		return
 	
 	for section in def.keys():
-		if section in ["Command", "Engineering", "SublightEngine", "ManeuverEngine", "Sensors"]:
+		if section in ["Command", "Engineering", "SublightEngine", "ManeuverEngine", "Sensors", "IonLance"]:
 			if "info" in def[section] and "structure" in def[section]:
 				var info = def[section].info
 				var struct = null
@@ -258,6 +246,13 @@ func construct_ship(def : Dictionary) -> void:
 								comp = Sensor.new(info)
 								comp.connect("sensor_stats_change", self, "_on_sensor_stats_change")
 								comp.connect("long_range", self, "_on_long_range")
+								comp.connect("ordered", self, "_on_ordered", [section])
+								engineering.connect_powered_component(comp)
+						"IonLance":
+							if engineering != null:
+								comp = IonLance.new(info)
+								comp.connect("ionlance_stats_change", self, "_on_ionlance_stats_change")
+								comp.connect("attack", self, "_on_ionlance_attack")
 								comp.connect("ordered", self, "_on_ordered", [section])
 								engineering.connect_powered_component(comp)
 					if comp != null:
@@ -310,23 +305,13 @@ func facing_edge() -> int:
 		return Hexmap.EDGE.RIGHT_UP
 	return -1
 
-func edge_from_coord(c : Vector2) -> int:
-	if c != coord:
-		var cpos = hexmap_node.coord_to_world(c)
-		var angle = 360 - _wrapRange(rad2deg(position.angle_to_point(cpos)) -90.0, 0.0, 360.0)
-		if (angle >= 330 and angle < 360) or (angle >= 0 and angle < 30):
-			return Hexmap.EDGE.UP
-		elif angle >= 30 and angle < 90:
-			return Hexmap.EDGE.LEFT_UP
-		elif angle >= 90 and angle < 150:
-			return Hexmap.EDGE.LEFT_DOWN
-		elif angle >= 150 and angle < 210:
-			return Hexmap.EDGE.DOWN
-		elif angle >= 210 and angle < 270:
-			return Hexmap.EDGE.RIGHT_DOWN
-		elif angle > 270 and angle < 330:
-			return Hexmap.EDGE.RIGHT_UP
-	return -1
+func relative_angle_to_entity(e : Entity) -> float:
+	var angle = angle_to_entity(e)
+	return _wrapRange(angle - facing, 0.0, 360.0)
+
+func relative_angle_to_coord(c : Vector2) -> float:
+	var angle = angle_to_coord(c)
+	return _wrapRange(angle - facing, 0.0, 360.0)
 
 func relative_edge_from_coord(c : Vector2) -> int:
 	var fe = facing_edge()
@@ -341,8 +326,9 @@ func shift_to_facing(units : int = 1) -> void:
 				var nc = hexmap_node.get_neighbor_coord(coord, facing_edge(), true)
 				var ent = hexmap_node.get_entity_at_coord(nc)
 				if ent is Entity:
-					ent.damage(TacCom.DAMAGE_TYPE.KINETIC, collision_value)
-					damage(TacCom.DAMAGE_TYPE.KINETIC, ent.collision_damage())
+					collide(ent)
+					#ent.damage(TacCom.DAMAGE_TYPE.KINETIC, collision_value)
+					#damage(TacCom.DAMAGE_TYPE.KINETIC, ent.collision_damage())
 			else:
 				set_coord(hexmap_node.get_neighbor_coord(coord, facing_edge()))
 
@@ -390,12 +376,56 @@ func process_turn() -> void:
 		sensor_state_changed = false
 		update_sensor_mask()
 
-func damage(type : int, amount : float) -> void:
+func damage(type : int, amount : float, connection : String = "mid") -> void:
 	if amount > 0:
-		mid_structure.damage(type, amount)
-		if explosion:
-			emit_signal("animating")
-			explosion.boom()
+		var anim = false
+		match connection:
+			"fore":
+				fore_structure.damage(type, amount)
+				anim = true
+			"mid":
+				mid_structure.damage(type, amount)
+				anim = true
+			"aft":
+				aft_structure.damage(type, amount)
+				anim = true
+		
+		if anim:
+			match type:
+				TacCom.DAMAGE_TYPE.KINETIC:
+					if explosion:
+						emit_signal("animating")
+						explosion.boom()
+
+
+func collide(e : Entity, one_way : bool = false) -> void:
+	var edge = relative_edge_from_coord(e.coord)
+	var dmg = e.collision_damage()
+	var angle = relative_angle_to_entity(e)
+	
+	var connection = ""
+	if edge == Hexmap.EDGE.UP:
+		connection = "fore"
+	elif edge == Hexmap.EDGE.DOWN:
+		connection = "aft"
+	elif edge == Hexmap.EDGE.LEFT_UP or Hexmap.EDGE.LEFT_DOWN:
+		connection = "mid"
+		if angle < 100:
+			connection = "fore"
+		elif angle > 200:
+			connection = "aft"
+	elif edge == Hexmap.EDGE.RIGHT_UP or Hexmap.EDGE.RIGHT_DOWN:
+		connection = "mid"
+		if angle < 200:
+			connection = "aft"
+		elif angle > 260:
+			connection = "fore"
+	
+	if connection != "":
+		damage(TacCom.DAMAGE_TYPE.KINETIC, dmg, connection)
+	if not one_way:
+		e.collide(self, true)
+
 
 func collision_damage() -> float:
 	return collision_value
@@ -420,6 +450,9 @@ func _on_sublight_propulsion(units_to_move : int) -> void:
 
 func _on_maneuver(degrees : float) -> void:
 	set_facing(facing + degrees)
+
+func _on_ionlance_attack(target : Vector2, dmg : float) -> void:
+	pass
 
 func _on_long_range(long_radius : int) -> void:
 	sensor_state_changed = true
@@ -448,3 +481,6 @@ func _on_sensor_stats_change(short_radius : int, long_radius : int) -> void:
 	emit_signal("sensor_stats_change", short_radius, long_radius)
 	# NOTE: I do NOT update sensor_long here as it may not be used every
 	#  turn. The variable sensor_long gets set by _on_long_range()
+
+func _on_ionlance_stats_change(rng : int, dmg : float) -> void:
+	emit_signal("ionlance_stats_change", rng, dmg)

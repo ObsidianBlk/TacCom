@@ -46,6 +46,17 @@ func _ready() -> void:
 # "Private" Methods
 # -----------------------------------------------------------
 
+func _wrapRange(v : float, minV : float, maxV : float, maxInclusive : bool = false) -> float:
+	var d = maxV - minV
+	while v < minV:
+		v += d
+	if maxInclusive:
+		while v > maxV:
+			v -= d
+	else:
+		while v >= maxV:
+			v -= d
+	return v
 
 # -----------------------------------------------------------
 # Methods
@@ -64,6 +75,29 @@ func clear_hexmap() -> void:
 		hexmap_node.disconnect("masking_changed", self, "_on_masking_changed")
 	hexmap_node = null
 
+func angle_to_entity(e : Entity) -> float:
+	return 360 - _wrapRange(rad2deg(position.angle_to_point(e.position)) -90.0, 0.0, 360.0)
+
+func angle_to_coord(c : Vector2) -> float:
+	var cpos = hexmap_node.coord_to_world(c)
+	return 360 - _wrapRange(rad2deg(position.angle_to_point(cpos)) -90.0, 0.0, 360.0)
+
+func edge_from_coord(c : Vector2) -> int:
+	if c != coord:
+		var angle = angle_to_coord(c)
+		if (angle >= 330 and angle < 360) or (angle >= 0 and angle < 30):
+			return Hexmap.EDGE.UP
+		elif angle >= 30 and angle < 90:
+			return Hexmap.EDGE.LEFT_UP
+		elif angle >= 90 and angle < 150:
+			return Hexmap.EDGE.LEFT_DOWN
+		elif angle >= 150 and angle < 210:
+			return Hexmap.EDGE.DOWN
+		elif angle >= 210 and angle < 270:
+			return Hexmap.EDGE.RIGHT_DOWN
+		elif angle > 270 and angle < 330:
+			return Hexmap.EDGE.RIGHT_UP
+	return -1
 
 func shift_to_edge(edge : int, ignore_blocked : bool = false) -> void:
 	if hexmap_node:
@@ -71,6 +105,10 @@ func shift_to_edge(edge : int, ignore_blocked : bool = false) -> void:
 
 func damage(type : int, amount : float) -> void:
 	pass
+
+func collide(e : Entity, one_way : bool = false) -> void:
+	if not one_way:
+		e.collide(self, true)
 
 func collision_damage() -> float:
 	return 0.0

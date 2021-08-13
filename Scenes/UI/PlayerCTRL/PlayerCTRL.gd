@@ -10,7 +10,7 @@ signal game_over(faction)
 
 
 enum PROCESS_STATE {FOCUS=0, PROCESS=1, END=2}
-enum FREELOOK_MODE {NORMAL=0, MANEUVER=1}
+enum FREELOOK_MODE {NORMAL=0, MANEUVER=1, IONLANCE=3}
 
 # -----------------------------------------------------------
 # Exports
@@ -49,6 +49,8 @@ onready var power = get_node("HBC/Info/Power")
 onready var engines = get_node("HBC/Info/Engines")
 onready var maneuver = get_node("HBC/Info/Maneuver")
 onready var sensors = get_node("HBC/Info/Sensors")
+onready var ionlance = get_node("HBC/Info/IonLance")
+
 onready var tween = get_node("Tween")
 
 
@@ -93,9 +95,11 @@ func _ready() -> void:
 	maneuver.visible = false
 	command.visible = false
 	sensors.visible = false
+	ionlance.visible = false
 	queue[command] = {"prev": maneuver, "next": power, "connection":"", "struct":0}
-	queue[power] = {"prev": command, "next": sensors, "connection":"", "struct":0}
-	queue[sensors] = {"prev": power, "next": engines, "connection":"", "struct":0}
+	queue[power] = {"prev": command, "next": ionlance, "connection":"", "struct":0}
+	queue[ionlance] = {"prev": power, "next": sensors, "connection":"", "struct":0}
+	queue[sensors] = {"prev": ionlance, "next": engines, "connection":"", "struct":0}
 	queue[engines] = {"prev": sensors, "next": maneuver, "connection":"", "struct":0}
 	queue[maneuver] = {"prev": engines, "next": command, "connection":"", "struct":0}
 	cur = command
@@ -119,13 +123,17 @@ func _process(delta : float) -> void:
 		var ship = null
 		if _proc_idx < _ships.size():
 			ship = _ships[_proc_idx]
+			if not ship.is_commandable():
+				_proc_delay = 0
+				_proc_state = PROCESS_STATE.PROCESS
 		
 		match _proc_state:
 			PROCESS_STATE.FOCUS:
 				region_node.set_target_node(ship)
 				_proc_state = PROCESS_STATE.PROCESS
 			PROCESS_STATE.PROCESS:
-				ship.process_turn()
+				if ship.is_commandable():
+					ship.process_turn()
 				_proc_idx += 1
 				_proc_state = PROCESS_STATE.FOCUS
 				if _proc_idx >= _ships.size():
@@ -133,9 +141,11 @@ func _process(delta : float) -> void:
 			PROCESS_STATE.END:
 				_proc_idx = -1
 				set_process(false)
+				_unfocus_ship()
 				ship = _FindOperableShip()
 				if ship != null:
-					region_node.set_target_node(ship)
+					_focus_ship()
+					#region_node.set_target_node(ship)
 					set_process_unhandled_input(true)
 					emit_signal("process_complete")
 				else:
@@ -144,17 +154,23 @@ func _process(delta : float) -> void:
 # -----------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------
-func _FindOperableShip() -> Ship:
+func _FindOperableShip(dir : int = 1) -> Ship:
 	var sidx = _ship_idx
 	var ship : Ship = _ships[_ship_idx]
-	while ship != null and not ship.is_controllable():
-		_ship_idx += 1
-		if _ship_idx >= _ships.size():
-			_ship_idx = 0
-		
-		ship = null
-		if _ship_idx != sidx:
-			ship = _ships[_ship_idx]
+	if dir != 0:
+		while ship != null and not ship.is_controllable():
+			if dir == 1:
+				_ship_idx += 1
+				if _ship_idx >= _ships.size():
+					_ship_idx = 0
+			else:
+				_ship_idx -= 1
+				if _ship_idx < 0:
+					_ship_idx = _ships.size() - 1
+			
+			ship = null
+			if _ship_idx != sidx:
+				ship = _ships[_ship_idx]
 	return ship
 
 
@@ -174,6 +190,7 @@ func _next_ship() -> void:
 		_ship_idx += 1
 		if _ship_idx == _ships.size():
 			_ship_idx = 0
+		_FindOperableShip(1)
 		_focus_ship()
 
 func _prev_ship() -> void:
@@ -182,6 +199,7 @@ func _prev_ship() -> void:
 		_ship_idx -= 1
 		if _ship_idx < 0:
 			_ship_idx += _ships.size()
+		_FindOperableShip(-1)
 		_focus_ship()
 
 func _ConnectShip(ship : Ship, sig_name : String, obj, method : String) -> void:
@@ -203,6 +221,7 @@ func _unfocus_ship() -> void:
 		_DisconnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_DisconnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
 		_DisconnectShip(ship, "sensor_stats_change", self, "_on_sensor_stats_change")
+		_DisconnectShip(ship, "ionlance_stats_change", self, "_on_ionlance_stats_change")
 
 func _focus_ship() -> void:
 	if _ship_idx >= 0 and _ship_idx < _ships.size() and region_node != null:
@@ -215,6 +234,7 @@ func _focus_ship() -> void:
 		_ConnectShip(ship, "sublight_stats_change", self, "_on_sublight_stats_change")
 		_ConnectShip(ship, "maneuver_stats_change", self, "_on_maneuver_stats_change")
 		_ConnectShip(ship, "sensor_stats_change", self, "_on_sensor_stats_change")
+		_ConnectShip(ship, "ionlance_stats_change", self, "_on_ionlance_stats_change")
 		region_node.set_target_node(ship)
 		ship.report_info()
 
@@ -255,6 +275,17 @@ func _SetVisToggle(pressed : bool, path : String, method : String) -> void:
 func _on_game_ready() -> void:
 	_set_faction(faction, true)
 
+func _on_ui_lock() -> void:
+	set_process_unhandled_input(false)
+	set_process(false)
+
+func _on_ui_release() -> void:
+	if _proc_idx >= 0:
+		set_process(true)
+	else:
+		set_process_unhandled_input(true)
+
+
 func _on_process_turn() -> void:
 	if _ships.size() > 0:
 		_proc_state = PROCESS_STATE.FOCUS
@@ -279,7 +310,6 @@ func _on_freelook_exit(c : Vector2, confirm : bool) -> void:
 		FREELOOK_MODE.NORMAL:
 			pass
 		FREELOOK_MODE.MANEUVER:
-			print("Confirm: ", confirm)
 			if confirm:
 				var ship : Ship = _ships[_ship_idx]
 				var me = ship.relative_edge_from_coord(c)
@@ -291,13 +321,15 @@ func _on_freelook_exit(c : Vector2, confirm : bool) -> void:
 				elif me == Hexmap.EDGE.DOWN:
 					dir = 3
 				#print("Freelook direction: ", dir, " | Freelook Edge: ", me)
-				print("Maneuver Direction: ", dir)
 				if dir == 0 or not ship.command("ManeuverEngine", dir):
-					print("Maneuver command failed")
 					_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
 			else:
-				print("Cancel")
 				_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
+		FREELOOK_MODE.IONLANCE:
+			if confirm:
+				pass
+			else:
+				_SetVisToggle(false, "HBC/Info/IonLance/IonLance_BTN", "_on_IonLance_BTN_toggled")
 	set_process_unhandled_input(true)
 
 
@@ -394,6 +426,15 @@ func _on_structure_change(struct : int, max_structure : int, comp : String, conn
 				sensors.get_node("Sensors_BTN").disabled = false
 			if cur == sensors:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
+		"IonLance":
+			queue[ionlance].connection = connection
+			queue[ionlance].struct = p
+			if p == 0:
+				ionlance.get_node("IonLance_BTN").disabled = true
+			else:
+				ionlance.get_node("IonLance_BTN").disabled = false
+			if cur == ionlance:
+				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 
 
 func _on_ordered(ordered : bool, comp : String) -> void:
@@ -404,6 +445,8 @@ func _on_ordered(ordered : bool, comp : String) -> void:
 			_SetVisToggle(ordered, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
 		"Sensors":
 			_SetVisToggle(ordered, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
+		"IonLance":
+			_SetVisToggle(ordered, "HBC/Info/Sensors/IonLance_BTN", "_on_IonLance_BTN_toggled")
 
 func _on_commands_change(available : int, total : int) -> void:
 	if command:
@@ -434,6 +477,11 @@ func _on_sensor_stats_change(short_radius : int, long_radius : int) -> void:
 		sensors.get_node("Short").text = String(short_radius)
 		sensors.get_node("Long").text = String(long_radius)
 
+func _on_ionlance_stats_change(rng : int, dmg : float) -> void:
+	if ionlance:
+		ionlance.get_node("range").text = String(rng)
+		ionlance.get_node("damage").text = String(floor(dmg))
+
 func _on_Sublight_BTN_toggled(button_pressed):
 	if _ship_idx >= 0:
 		var ship : Ship = _ships[_ship_idx]
@@ -456,14 +504,6 @@ func _on_Manuvers_BTN_toggled(button_pressed):
 			ship.belay("ManeuverEngine")
 
 
-func _on_Lasers_BTN_toggled(button_pressed):
-	pass # Replace with function body.
-
-
-func _on_Missile_BTN_toggled(button_pressed):
-	pass # Replace with function body.
-
-
 func _on_Sensors_BTN_toggled(button_pressed):
 	if _ship_idx >= 0:
 		var ship : Ship = _ships[_ship_idx]
@@ -472,3 +512,14 @@ func _on_Sensors_BTN_toggled(button_pressed):
 				_SetVisToggle(false, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
 		else:
 			ship.belay("Sensors")
+
+func _on_IonLance_BTN_toggled(button_pressed):
+	if _ship_idx >= 0:
+		var ship : Ship = _ships[_ship_idx]
+		if button_pressed:
+			var fo = get_focus_owner()
+			if fo:
+				fo.release_focus()
+			_freelook(FREELOOK_MODE.IONLANCE)
+		else:
+			ship.belay("IonLance")

@@ -89,6 +89,17 @@ func _add_ship_to_region(coord : Vector2) -> void:
 				"short_radius":3,
 				"long_radius":3
 			}
+		},
+		"IonLance":{
+			"structure":"fore",
+			"info":{
+				"priority":2,
+				"structure":30,
+				"defense":[30,0,10],
+				"power_required":2,
+				"range":12,
+				"damage":8
+			}
 		}
 	})
 	

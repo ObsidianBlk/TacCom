@@ -10,6 +10,9 @@ signal hexmap(hm)
 signal ship_added(ship)
 signal ship_removed(ship)
 
+signal ui_lock
+signal ui_release
+
 # -----------------------------------------------------------
 # Export Variables
 # -----------------------------------------------------------
@@ -63,12 +66,15 @@ func _process(_delta : float) -> void:
 
 func _add_entity(ent : Entity, ent_container : Node2D, signal_name : String = "") -> void:
 	var ent_parent = ent.get_parent()
-	if ent_parent == ent_container:
-		return
-	if ent_parent != null:
-		ent_parent.remove_child(ent)
-	ent_container.add_child(ent)
+	if ent_parent != ent_container:
+		if ent_parent != null:
+			ent_parent.remove_child(ent)
+		ent_container.add_child(ent)
 	ent.set_hexmap(hexmap_node)
+	if ent.has_signal("animating"):
+		ent.connect("animating", self, "_on_entity_animating")
+	if ent.has_signal("animation_complete"):
+		ent.connect("animation_complete", self, "_on_entity_animation_complete")
 	if signal_name != "":
 		emit_signal(signal_name, ent)
 
@@ -129,5 +135,9 @@ func get_entity_at_coord(coord : Vector2):
 # Handler Methods
 # -----------------------------------------------------------
 
+func _on_entity_animating() -> void:
+	emit_signal("ui_lock")
 
+func _on_entity_animation_complete() -> void:
+	emit_signal("ui_release")
 

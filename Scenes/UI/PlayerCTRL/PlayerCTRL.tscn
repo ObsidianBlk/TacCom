@@ -215,6 +215,39 @@ margin_right = 33.0
 margin_bottom = 7.0
 text = "0"
 
+[node name="IonLance" type="HBoxContainer" parent="HBC/Info"]
+margin_top = 9.0
+margin_right = 42.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+custom_constants/separation = 2
+
+[node name="IonLance_BTN" type="Button" parent="HBC/Info/IonLance"]
+margin_right = 9.0
+margin_bottom = 7.0
+custom_fonts/font = ExtResource( 2 )
+toggle_mode = true
+text = "l"
+
+[node name="range" type="Label" parent="HBC/Info/IonLance"]
+margin_left = 11.0
+margin_right = 18.0
+margin_bottom = 7.0
+text = "0"
+
+[node name="Slash" type="Label" parent="HBC/Info/IonLance"]
+margin_left = 20.0
+margin_right = 24.0
+margin_bottom = 7.0
+custom_colors/font_color = Color( 0.301961, 0.301961, 0.301961, 1 )
+text = "/"
+
+[node name="damage" type="Label" parent="HBC/Info/IonLance"]
+margin_left = 26.0
+margin_right = 33.0
+margin_bottom = 7.0
+text = "0"
+
 [node name="Power" type="HBoxContainer" parent="HBC/Info"]
 visible = false
 margin_top = 9.0
@@ -305,5 +338,6 @@ text = ">"
 [connection signal="toggled" from="HBC/Info/Engines/Sublight_BTN" to="." method="_on_Sublight_BTN_toggled"]
 [connection signal="toggled" from="HBC/Info/Maneuver/Manuvers_BTN" to="." method="_on_Manuvers_BTN_toggled"]
 [connection signal="toggled" from="HBC/Info/Sensors/Sensors_BTN" to="." method="_on_Sensors_BTN_toggled"]
+[connection signal="toggled" from="HBC/Info/IonLance/IonLance_BTN" to="." method="_on_IonLance_BTN_toggled"]
 [connection signal="pressed" from="HBC/Next/End_Turn" to="." method="_on_process_turn"]
 [connection signal="pressed" from="HBC/Next/Next_Info" to="." method="_on_Next_Info_pressed"]

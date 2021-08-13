@@ -188,7 +188,7 @@ func process_turn() -> void:
 
 func damage(type : int, amount : float) -> void:
 	if not _processing_damage:
-		_processing = true
+		_processing_damage = true
 		var operational = []
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
