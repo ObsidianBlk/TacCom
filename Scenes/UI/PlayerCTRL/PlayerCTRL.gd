@@ -6,6 +6,7 @@ extends Control
 # -----------------------------------------------------------
 signal process_complete
 signal freelook(c)
+signal game_over(faction)
 
 
 enum PROCESS_STATE {FOCUS=0, PROCESS=1, END=2}
@@ -131,14 +132,32 @@ func _process(delta : float) -> void:
 					_proc_state = PROCESS_STATE.END
 			PROCESS_STATE.END:
 				_proc_idx = -1
-				region_node.set_target_node(_ships[_ship_idx])
 				set_process(false)
-				set_process_unhandled_input(true)
-				emit_signal("process_complete")
+				ship = _FindOperableShip()
+				if ship != null:
+					region_node.set_target_node(ship)
+					set_process_unhandled_input(true)
+					emit_signal("process_complete")
+				else:
+					emit_signal("game_over", faction)
 
 # -----------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------
+func _FindOperableShip() -> Ship:
+	var sidx = _ship_idx
+	var ship : Ship = _ships[_ship_idx]
+	while ship != null and not ship.is_controllable():
+		_ship_idx += 1
+		if _ship_idx >= _ships.size():
+			_ship_idx = 0
+		
+		ship = null
+		if _ship_idx != sidx:
+			ship = _ships[_ship_idx]
+	return ship
+
+
 func _freelook(mode : int) -> void:
 	_freelook_mode = mode
 	set_process_unhandled_input(false)
@@ -199,21 +218,27 @@ func _focus_ship() -> void:
 		region_node.set_target_node(ship)
 		ship.report_info()
 
-func _SetStatusConnection(connection : String, struct_percentage : float) -> void:
+func _SetStructureColor(connection : String, is_focus : bool = false) -> void:
 	var color = Color("#ffe65d")
+	var label = null
+	match connection:
+		"fore":
+			label = ship_status.get_node("Label_Fore")
+		"mid":
+			label = ship_status.get_node("Label_Mid")
+		"aft":
+			label = ship_status.get_node("Label_Aft")
+	
+	if _ships[_ship_idx].get_body_structure(connection) == 0.0:
+		label.set("custom_colors/font_color", Color("#333333"))
+	else:
+		label.set("custom_colors/font_color", color if is_focus else null)
+
+func _SetStatusConnection(connection : String, struct_percentage : float) -> void:
 	if ship_status:
-		ship_status.get_node("Label_Aft").set(
-			"custom_colors/font_color",
-			color if connection == "aft" else null
-		)
-		ship_status.get_node("Label_Mid").set(
-			"custom_colors/font_color",
-			color if connection == "mid" else null
-		)
-		ship_status.get_node("Label_Fore").set(
-			"custom_colors/font_color",
-			color if connection == "fore" else null
-		)
+		_SetStructureColor("aft", connection == "aft")
+		_SetStructureColor("mid", connection == "mid")
+		_SetStructureColor("fore", connection == "fore")
 		ship_status.get_node("Bar").value = struct_percentage
 
 func _SetVisToggle(pressed : bool, path : String, method : String) -> void:
@@ -239,8 +264,8 @@ func _on_process_turn() -> void:
 		_SetVisToggle(false, "HBC/Info/Engines/Sublight_BTN", "_on_Sublight_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
 		_SetVisToggle(false, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
-		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Missile_BTN", "_on_Missile_BTN_toggled")
-		_SetVisToggle(false, "HBC/Info/Commands/Buttons/Lasers_BTN", "_on_Lasers_BTN_toggled")
+		#_SetVisToggle(false, "HBC/Info/Commands/Buttons/Missile_BTN", "_on_Missile_BTN_toggled")
+		#_SetVisToggle(false, "HBC/Info/Commands/Buttons/Lasers_BTN", "_on_Lasers_BTN_toggled")
 		set_process_unhandled_input(false)
 		set_process(true)
 
@@ -315,6 +340,7 @@ func _on_Next_Info_pressed():
 
 
 func _on_structure_change(struct : int, max_structure : int, comp : String, connection : String) -> void:
+	var color = Color("#333333")
 	var p = 0
 	if max_structure > 0:
 		p = floor((float(struct) / float(max_structure)) * 100)
@@ -326,28 +352,49 @@ func _on_structure_change(struct : int, max_structure : int, comp : String, conn
 		"Command":
 			queue[command].struct = p
 			queue[command].connection = connection
+			command.get_node("Label").set(
+				"custom_colors/font_color",
+				color if p == 0 else null
+			)
 			if cur == command:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 		"Engineering":
 			queue[power].connection = connection
 			queue[power].struct = p
+			power.get_node("Label").set(
+				"custom_colors/font_color",
+				color if p == 0 else null
+			)
 			if cur == power:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 		"SublightEngine":
 			queue[engines].connection = connection
 			queue[engines].struct = p
+			if p == 0:
+				engines.get_node("Sublight_BTN").disabled = true
+			else:
+				engines.get_node("Sublight_BTN").disabled = false
 			if cur == engines:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 		"ManeuverEngine":
 			queue[maneuver].connection = connection
 			queue[maneuver].struct = p
+			if p == 0:
+				maneuver.get_node("Manuvers_BTN").disabled = true
+			else:
+				maneuver.get_node("Manuvers_BTN").disabled = false
 			if cur == maneuver:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
 		"Sensors":
 			queue[sensors].connection = connection
 			queue[sensors].struct = p
+			if p == 0:
+				sensors.get_node("Sensors_BTN").disabled = true
+			else:
+				sensors.get_node("Sensors_BTN").disabled = false
 			if cur == sensors:
 				_SetStatusConnection(queue[cur].connection, queue[cur].struct)
+
 
 func _on_ordered(ordered : bool, comp : String) -> void:
 	match comp:

@@ -44,8 +44,15 @@ func _DegreesInBounds(d : float) -> float:
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
+func set_destroyed() -> void:
+	_units_per_turn = 0
+	_turns_to_trigger = 0
+	emit_signal("maneuver_stats_change", _units_per_turn * _degrees_per_unit, _turns_to_trigger)
+	.set_destroyed()
+
+
 func report_info() -> void:
-	if not _processing:
+	if not _processing_report:
 		emit_signal("maneuver_stats_change", _units_per_turn * _degrees_per_unit, _turns_to_trigger)
 		emit_signal("ordered", _dir != 0)
 		.report_info()

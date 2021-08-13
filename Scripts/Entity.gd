@@ -33,7 +33,7 @@ func set_coord(c : Vector2):
 	if hexmap_node:
 		position = hexmap_node.coord_to_world(coord)
 		if _blocking:
-			hexmap_node.set_coord_blocked(coord, false)
+			hexmap_node.set_coord_blocked(coord, true)
 
 
 # -----------------------------------------------------------

@@ -58,8 +58,17 @@ func connect_powered_component(pc : PoweredComponent) -> void:
 	pc.connect("pull_power", self, "_on_pull_power", [pc])
 	pc.connect("release_power", self, "_on_release_power", [pc])
 
+func set_destroyed() -> void:
+	_available_power = 0
+	_generated_power = 0
+	emit_signal("power_change", _available_power, _generated_power)
+	for pc in _reserved.keys():
+		pc.power(0)
+	_reserved = {}
+	.set_destroyed()
+
 func report_info() -> void:
-	if not _processing:
+	if not _processing_report:
 		emit_signal("power_change", _available_power, _generated_power)
 		.report_info()
 

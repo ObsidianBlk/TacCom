@@ -48,3 +48,4 @@ faction = "TAC"
 [connection signal="hexmap" from="Region" to="Region/Cursor" method="_on_hexmap"]
 [connection signal="freelook_exit" from="Region/Cursor" to="CanvasLayer/PlayerCTRL" method="_on_freelook_exit"]
 [connection signal="freelook" from="CanvasLayer/PlayerCTRL" to="Region/Cursor" method="_on_freelook"]
+[connection signal="game_over" from="CanvasLayer/PlayerCTRL" to="." method="_on_Player_game_over"]

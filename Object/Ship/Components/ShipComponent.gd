@@ -18,6 +18,9 @@ signal damage_blowback(type, amount)
 # Variables
 # -----------------------------------------------------------
 var _processing = false
+var _processing_damage = false # Because damage can happen in the middle of processing.
+var _processing_structure = false
+var _processing_report = false
 var _immortal = false
 var _job_type = Crewman.TYPE.GENERAL
 var _connections : PriorityQueue = PriorityQueue.new()
@@ -73,7 +76,8 @@ func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> v
 	match type:
 		TacCom.DAMAGE_TYPE.KINETIC:
 			var dmg = amount - (amount * _KineticDefense())
-			_structure -= dmg
+			print("Amount: ", amount, " | Defense: ", _kinetic_defense, " | total DMG: ", dmg)
+			_structure = max(0, _structure - dmg)
 			if emitBlowback and (_structure / ostruct) < 0.75:
 				print("Kinetic Blockback! ", _structure, "/", ostruct, "=", (_structure/ostruct))
 				emit_signal("damage_blowback", type, dmg * 0.1)
@@ -86,7 +90,15 @@ func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> v
 		TacCom.DAMAGE_TYPE.RADIATION:
 			print("Radiation detected... thankfully nothing is affected by this at the moment!")
 	emit_signal("structure_change", ostruct, _structure, _max_structure)
-	
+	if _structure <= 0:
+		_destroy_connections()
+
+
+func _destroy_connections() -> void:
+	for i in range(_connections.size()):
+		var c = _connections.peek_value(i)
+		if c.get_priority() != 0: # NOTE: This is a hack. Only "structures" are priority 0 ATM
+			c.set_destroyed()
 
 # -----------------------------------------------------------
 # Public Methods
@@ -102,18 +114,19 @@ func connect_to(c : ShipComponent, bidirectional : bool = false) -> void:
 func get_priority() -> float:
 	return _priority
 
-func get_structure(originator = null):
-	if not _processing:
-		_processing = true
+func get_structure(all_connections : bool = true):
+	if not _processing_structure:
+		_processing_structure = true
 		var s = _structure
 		var ms = _max_structure
-		for i in range(_connections.size()):
-			var c = _connections.peek_value(i)
-			var csi = c.get_structure()
-			if csi != null:
-				s += csi.structure
-				ms += csi.max_structure
-		_processing = false
+		if all_connections:
+			for i in range(_connections.size()):
+				var c = _connections.peek_value(i)
+				var csi = c.get_structure()
+				if csi != null:
+					s += csi.structure
+					ms += csi.max_structure
+		_processing_structure = false
 		return {
 			"structure":s,
 			"max_structure":ms
@@ -125,21 +138,23 @@ func get_structure_percent() -> float:
 	return si.structure / si.max_structure
 
 func set_destroyed() -> void:
-	var ostruct = _structure
-	_structure = 0
-	emit_signal("structure_change", ostruct, _structure, _max_structure)
+	if _structure > 0:
+		var ostruct = _structure
+		_structure = 0
+		_destroy_connections()
+		emit_signal("structure_change", ostruct, _structure, _max_structure)
 
 func is_operating() -> bool:
 	return _structure > 0 or _immortal
 
 func report_info() -> void:
-	if not _processing:
-		_processing = true
+	if not _processing_report:
+		_processing_report = true
 		emit_signal("structure_change", _structure, _structure, _max_structure)
 		for i in range(_connections.size()):
 			var c = _connections.peek_value(i)
 			c.report_info()
-		_processing = false
+		_processing_report = false
 
 func command(order : String, detail = null) -> bool:
 	if not _processing:
@@ -172,7 +187,7 @@ func process_turn() -> void:
 		_processing = false
 
 func damage(type : int, amount : float) -> void:
-	if not _processing:
+	if not _processing_damage:
 		_processing = true
 		var operational = []
 		for i in range(_connections.size()):
@@ -188,7 +203,7 @@ func damage(type : int, amount : float) -> void:
 				c.damage(type, amount)
 		elif _structure > 0:
 			_handle_damage(type, amount)
-		_processing = false
+		_processing_damage = false
 
 # -----------------------------------------------------------
 # Handler Methods

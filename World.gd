@@ -26,7 +26,7 @@ func _add_ships() -> void:
 		ast.coord = Vector2(5, 0)
 	
 	_add_ship_to_region(Vector2.ZERO)
-	_add_ship_to_region(Vector2(-3, 1))
+	#_add_ship_to_region(Vector2(-3, 1))
 	_add_ship_to_region(Vector2(3, -1))
 	emit_signal("game_ready")
 
@@ -100,3 +100,5 @@ func _on_logo_complete() -> void:
 	logo_node.queue_free()
 
 
+func _on_Player_game_over(faction):
+	print ("Faction ", faction, "Has lost the game!")

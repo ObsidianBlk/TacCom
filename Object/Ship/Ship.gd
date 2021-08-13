@@ -53,6 +53,8 @@ var construct_def = null
 var struct = 0
 var collision_value = 100
 var commands_available = 0
+var commandable = false
+var powerable = false
 var sensor_short = 0
 var sensor_long = 0
 var sensor_state_changed = false
@@ -271,6 +273,27 @@ func construct_ship(def : Dictionary) -> void:
 	_RedrawHealthBar(info.structure, info.max_structure)
 
 
+func get_body_structure(body : String) -> float:
+	var info = null
+	match body:
+		"fore":
+			info = fore_structure.get_structure(false)
+		"mid":
+			info = mid_structure.get_structure(false)
+		"aft":
+			info = aft_structure.get_structure(false)
+	if info != null:
+		return info.structure
+	return -1.0
+
+func is_commandable() -> bool:
+	return commandable
+
+func is_powered() -> bool:
+	return powerable
+
+func is_controllable() -> bool:
+	return commandable and powerable
 
 func facing_edge() -> int:
 	if (facing >= 330 and facing < 360) or (facing >= 0 and facing < 30):
@@ -344,10 +367,13 @@ func update_sensor_mask() -> void:
 			hexmap_node.set_coord_mask(coord)
 
 
-func report_info() -> void:
+func report_info(just_structure : bool = false) -> void:
 	var info = mid_structure.get_structure()
 	emit_signal("structure_change", info.structure, info.max_structure, "Ship", "")
-	mid_structure.report_info()
+	collision_value = info.structure * 0.5
+	_RedrawHealthBar(float(info.structure), float(info.max_structure))
+	if not just_structure:
+		mid_structure.report_info()
 
 func command(order : String, detail = null) -> bool:
 	if commands_available > 0:
@@ -379,11 +405,11 @@ func collision_damage() -> float:
 # -----------------------------------------------------------
 func _on_anim_complete() -> void:
 	emit_signal("animation_complete")
+	report_info()
 
 func _on_structure_change(old_structure : int, new_structure : int, max_structure : int, comp : String, connection : String) -> void:
 		if comp == "Ship":
-			collision_value = new_structure * 0.5
-			_RedrawHealthBar(float(new_structure), float(max_structure))
+			print("New Ship Structure... ", old_structure, " -> ", new_structure)
 		emit_signal("structure_change", new_structure, max_structure, comp, connection)
 
 func _on_ordered(ordered : bool, comp : String) -> void:
@@ -401,12 +427,14 @@ func _on_long_range(long_radius : int) -> void:
 
 func _on_commands_change(available : int, total : int) -> void:
 	commands_available = available
+	commandable = total > 0
 	emit_signal("commands_change", available, total)
 
 func _on_invalid_command(order : String) -> void:
 	emit_signal("invalid_command", order, self)
 
 func _on_power_change(available : int, total : int) -> void:
+	powerable = total > 0
 	emit_signal("power_change", available, total)
 
 func _on_sublight_stats_change(propulsion_units : int, turns_to_trigger : int) -> void:

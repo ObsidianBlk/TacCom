@@ -54,8 +54,14 @@ func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> v
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
+func set_destroyed() -> void:
+	_propulsion_units = 0
+	_turns_to_trigger = 0
+	emit_signal("sublight_stats_change", _propulsion_units, _turns_to_trigger)
+	.set_destroyed()
+
 func report_info() -> void:
-	if not _processing:
+	if not _processing_report:
 		emit_signal("sublight_stats_change", _propulsion_units, _turns_to_trigger)
 		emit_signal("ordered", _ordered)
 		.report_info()

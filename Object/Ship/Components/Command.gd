@@ -42,8 +42,14 @@ func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> v
 # -----------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------
+func set_destroyed() -> void:
+	_available = 0
+	_total = 0
+	emit_signal("commands_change", _available, _total)
+	.set_destroyed()
+
 func report_info() -> void:
-	if not _processing:
+	if not _processing_report:
 		emit_signal("commands_change", _available, _total)
 		.report_info()
 

@@ -115,11 +115,11 @@ func get_ships_in_faction(faction_name : String) -> Array:
 	return sig
 
 func get_entity_at_coord(coord : Vector2):
-	for child in ship_container.children():
+	for child in ship_container.get_children():
 		if child is Entity:
 			if child.coord == coord:
 				return child
-	for child in env_container.children():
+	for child in env_container.get_children():
 		if child is Entity:
 			if child.coord == coord:
 				return child
