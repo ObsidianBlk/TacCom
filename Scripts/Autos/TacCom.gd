@@ -19,6 +19,20 @@ func create_TAC_ship() -> Ship:
 	ship.faction = "TAC"
 	
 	ship.construct_ship({
+		"Hull":{
+			"fore":{
+				"structure": 90,
+				"defense":[20, 5, 10]
+			},
+			"mid":{
+				"structure": 100,
+				"defense":[30, 5, 10]
+			},
+			"aft":{
+				"structure": 90,
+				"defense":[20, 5, 10]
+			}
+		},
 		"Command":{
 			"structure":"fore",
 			"info":{
@@ -32,7 +46,7 @@ func create_TAC_ship() -> Ship:
 			"structure":"mid",
 			"info": {
 				"priority":10,
-				"structure":30,
+				"structure":60,
 				"defense":[30,0,10],
 				"power":4
 			}
@@ -78,7 +92,7 @@ func create_TAC_ship() -> Ship:
 				"defense":[30,0,10],
 				"power_required":2,
 				"range":12,
-				"damage":8
+				"damage":20
 			}
 		}
 	})
@@ -98,6 +112,20 @@ func create_COM_ship() -> Ship:
 	ship.faction = "COM"
 	
 	ship.construct_ship({
+		"Hull":{
+			"fore":{
+				"structure": 90,
+				"defense":[20, 5, 10]
+			},
+			"mid":{
+				"structure": 100,
+				"defense":[30, 5, 10]
+			},
+			"aft":{
+				"structure": 90,
+				"defense":[20, 5, 10]
+			}
+		},
 		"Command":{
 			"structure":"fore",
 			"info":{
@@ -111,7 +139,7 @@ func create_COM_ship() -> Ship:
 			"structure":"mid",
 			"info": {
 				"priority":10,
-				"structure":30,
+				"structure":60,
 				"defense":[30,0,10],
 				"power":4
 			}
@@ -157,7 +185,7 @@ func create_COM_ship() -> Ship:
 				"defense":[30,0,10],
 				"power_required":2,
 				"range":12,
-				"damage":8
+				"damage":20
 			}
 		}
 	})

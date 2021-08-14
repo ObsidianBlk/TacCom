@@ -76,17 +76,14 @@ func _handle_damage(type : int, amount : float, emitBlowback : bool = true) -> v
 	match type:
 		TacCom.DAMAGE_TYPE.KINETIC:
 			var dmg = amount - (amount * _KineticDefense())
-			print("Amount: ", amount, " | Defense: ", _kinetic_defense, " | total DMG: ", dmg)
 			_structure = max(0, _structure - dmg)
-			if emitBlowback and (_structure / ostruct) < 0.75:
-				print("Kinetic Blockback! ", _structure, "/", ostruct, "=", (_structure/ostruct))
-				emit_signal("damage_blowback", type, dmg * 0.1)
+			#if emitBlowback and (_structure / ostruct) < 0.75:
+			#	emit_signal("damage_blowback", type, dmg * 0.1)
 		TacCom.DAMAGE_TYPE.ENERGY:
-			var dmg = amount - (amount * _EnergyDefense())
-			_structure = max(0, _structure - (_structure * (dmg / 200)))
-			if emitBlowback and (_structure / ostruct) < 0.75:
-				print("Energy Blockback! ", _structure, "/", ostruct, "=", (_structure/ostruct))
-				emit_signal("damage_blowback", TacCom.DAMAGE_TYPE.KINETIC, (ostruct - _structure) * 0.5)
+			var dmg = amount * (1.0 - _EnergyDefense())
+			_structure = max(0, _structure - dmg) #max(0, _structure - (_structure * (dmg / 200)))
+			#if emitBlowback and (_structure / ostruct) < 0.75:
+			#	emit_signal("damage_blowback", TacCom.DAMAGE_TYPE.KINETIC, (ostruct - _structure) * 0.5)
 		TacCom.DAMAGE_TYPE.RADIATION:
 			print("Radiation detected... thankfully nothing is affected by this at the moment!")
 	emit_signal("structure_change", ostruct, _structure, _max_structure)

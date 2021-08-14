@@ -1,0 +1,135 @@
+[gd_scene load_steps=16 format=2]
+
+[ext_resource path="res://Shaders/Fragment/colorswap.shader" type="Shader" id=1]
+[ext_resource path="res://Shaders/Fragment/Starfield.shader" type="Shader" id=2]
+[ext_resource path="res://Assets/Graphics/Logo.png" type="Texture" id=3]
+[ext_resource path="res://Assets/TacCom.theme" type="Theme" id=4]
+[ext_resource path="res://Assets/Graphics/BTN_normal.png" type="Texture" id=5]
+[ext_resource path="res://Assets/Graphics/BTN_pressed.png" type="Texture" id=6]
+[ext_resource path="res://Assets/Graphics/BTN_hover.png" type="Texture" id=7]
+[ext_resource path="res://Assets/Graphics/BTN_focus.png" type="Texture" id=8]
+[ext_resource path="res://Scenes/UI/MainMenu/MainMenu.gd" type="Script" id=9]
+
+[sub_resource type="ShaderMaterial" id=1]
+shader = ExtResource( 2 )
+shader_param/num_layers = 20
+shader_param/starfield_scale = 1.0
+shader_param/star_scale = 0.109
+shader_param/star_color_saturation = 0.267
+shader_param/flare_range = 0.037
+shader_param/flare_intensity = 0.258
+shader_param/anim_scale = 1.0
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = ExtResource( 1 )
+shader_param/use_screen = false
+shader_param/alpha = 1.0
+shader_param/color_1_from = Color( 0.313726, 0.313726, 0.313726, 1 )
+shader_param/color_1_to = Color( 0.643137, 0.635294, 0.54902, 1 )
+shader_param/color_2_from = Color( 0.352941, 0.352941, 0.352941, 1 )
+shader_param/color_2_to = Color( 0.917647, 0.823529, 0.67451, 1 )
+shader_param/color_3_from = Color( 0.392157, 0.392157, 0.392157, 1 )
+shader_param/color_3_to = Color( 0.435294, 0.411765, 0.345098, 1 )
+shader_param/color_4_from = Color( 0.431373, 0.431373, 0.431373, 1 )
+shader_param/color_4_to = Color( 0.564706, 0.537255, 0.403922, 1 )
+shader_param/color_5_from = Color( 0.470588, 0.470588, 0.470588, 1 )
+shader_param/color_5_to = Color( 0.662745, 0.639216, 0.423529, 1 )
+shader_param/color_6_from = Color( 0.509804, 0.509804, 0.509804, 1 )
+shader_param/color_6_to = Color( 0.745098, 0.764706, 0.45098, 1 )
+shader_param/color_7_from = Color( 1, 1, 1, 1 )
+shader_param/color_7_to = Color( 1, 1, 1, 1 )
+shader_param/color_8_from = Color( 1, 1, 1, 1 )
+shader_param/color_8_to = Color( 1, 1, 1, 1 )
+shader_param/threshold = 0.05
+
+[sub_resource type="StyleBoxTexture" id=3]
+texture = ExtResource( 7 )
+region_rect = Rect2( 0, 0, 16, 10 )
+margin_left = 4.0
+margin_right = 4.0
+
+[sub_resource type="StyleBoxTexture" id=4]
+texture = ExtResource( 6 )
+region_rect = Rect2( 0, 0, 16, 10 )
+margin_left = 4.0
+margin_right = 4.0
+
+[sub_resource type="StyleBoxTexture" id=5]
+texture = ExtResource( 8 )
+region_rect = Rect2( 0, 0, 16, 10 )
+margin_left = 4.0
+margin_right = 4.0
+
+[sub_resource type="StyleBoxTexture" id=6]
+texture = ExtResource( 5 )
+region_rect = Rect2( 0, 0, 16, 10 )
+margin_left = 4.0
+margin_right = 4.0
+
+[node name="MainMenu" type="MarginContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 4 )
+script = ExtResource( 9 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Space" type="ColorRect" parent="."]
+material = SubResource( 1 )
+margin_right = 64.0
+margin_bottom = 64.0
+
+[node name="Logo" type="TextureRect" parent="."]
+material = SubResource( 2 )
+margin_right = 64.0
+margin_bottom = 64.0
+texture = ExtResource( 3 )
+
+[node name="Menu" type="MarginContainer" parent="."]
+margin_right = 64.0
+margin_bottom = 64.0
+custom_constants/margin_right = 8
+custom_constants/margin_top = 37
+custom_constants/margin_left = 8
+custom_constants/margin_bottom = 2
+
+[node name="Buttons" type="VBoxContainer" parent="Menu"]
+margin_left = 8.0
+margin_top = 37.0
+margin_right = 56.0
+margin_bottom = 62.0
+custom_constants/separation = 2
+
+[node name="BTN_Start" type="Button" parent="Menu/Buttons"]
+margin_right = 48.0
+margin_bottom = 7.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/normal = SubResource( 6 )
+text = "Start"
+
+[node name="BTN_Options" type="Button" parent="Menu/Buttons"]
+margin_top = 9.0
+margin_right = 48.0
+margin_bottom = 16.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/normal = SubResource( 6 )
+text = "Option"
+
+[node name="BTN_Quit" type="Button" parent="Menu/Buttons"]
+margin_top = 18.0
+margin_right = 48.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/normal = SubResource( 6 )
+text = "quit"
+
+[connection signal="pressed" from="Menu/Buttons/BTN_Start" to="." method="_on_BTN_Start_pressed"]
+[connection signal="pressed" from="Menu/Buttons/BTN_Options" to="." method="_on_BTN_Options_pressed"]
+[connection signal="pressed" from="Menu/Buttons/BTN_Quit" to="." method="_on_BTN_Quit_pressed"]

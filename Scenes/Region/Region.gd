@@ -142,15 +142,25 @@ func get_entity_at_coord(coord : Vector2):
 	return null
 
 
+func reset() -> void:
+	for child in ship_container.get_children():
+		remove_ship(child)
+	for child in env_container.get_children():
+		remove_env(child)
+	_target = null
+	camera_node.current = false
+	hexmap_node.reset_map()
+
+
 func create_map(img_src : String) -> void:
 	if not hexmap_node:
 		return
 	
 	var image : Image = Image.new()
 	if image.load(img_src) == OK:
+		reset()
 		var w = image.get_width()
 		var h = image.get_height()
-		hexmap_node.reset_map()
 		hexmap_node.bounds = Rect2(0, 0, w, h)
 		
 		image.lock()

@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Assets/TacCom.theme" type="Theme" id=1]
+[ext_resource path="res://Scenes/UI/Winner/Winner.gd" type="Script" id=2]
+
+[node name="Winner" type="MarginContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 1 )
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_right = 64.0
+margin_bottom = 64.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color( 0.176471, 0.192157, 0.235294, 0.784314 )
+
+[node name="MC" type="CenterContainer" parent="."]
+margin_right = 64.0
+margin_bottom = 64.0
+
+[node name="Message" type="VBoxContainer" parent="MC"]
+margin_left = 7.0
+margin_top = 23.0
+margin_right = 56.0
+margin_bottom = 41.0
+
+[node name="Label" type="Label" parent="MC/Message"]
+margin_right = 49.0
+margin_bottom = 7.0
+custom_colors/font_color = Color( 1, 0.988235, 0.670588, 1 )
+text = "SOMEONE"
+
+[node name="Label2" type="Label" parent="MC/Message"]
+margin_top = 11.0
+margin_right = 49.0
+margin_bottom = 18.0
+custom_colors/font_color = Color( 1, 0.72549, 0, 1 )
+text = "Has WON"

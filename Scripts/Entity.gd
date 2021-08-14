@@ -85,22 +85,39 @@ func angle_to_coord(c : Vector2) -> float:
 	var cpos = hexmap_node.coord_to_world(c)
 	return 360 - _wrapRange(rad2deg(position.angle_to_point(cpos)) -90.0, 0.0, 360.0)
 
+func edge_from_angle(angle : float) -> int:
+	if (angle >= 330 and angle < 360) or (angle >= 0 and angle < 30):
+		return Hexmap.EDGE.UP
+	elif angle >= 30 and angle < 90:
+		return Hexmap.EDGE.LEFT_UP
+	elif angle >= 90 and angle < 150:
+		return Hexmap.EDGE.LEFT_DOWN
+	elif angle >= 150 and angle < 210:
+		return Hexmap.EDGE.DOWN
+	elif angle >= 210 and angle < 270:
+		return Hexmap.EDGE.RIGHT_DOWN
+	elif angle > 270 and angle < 330:
+		return Hexmap.EDGE.RIGHT_UP
+	return -1
+
 func edge_from_coord(c : Vector2) -> int:
 	if c != coord:
-		var angle = angle_to_coord(c)
-		if (angle >= 330 and angle < 360) or (angle >= 0 and angle < 30):
-			return Hexmap.EDGE.UP
-		elif angle >= 30 and angle < 90:
-			return Hexmap.EDGE.LEFT_UP
-		elif angle >= 90 and angle < 150:
-			return Hexmap.EDGE.LEFT_DOWN
-		elif angle >= 150 and angle < 210:
-			return Hexmap.EDGE.DOWN
-		elif angle >= 210 and angle < 270:
-			return Hexmap.EDGE.RIGHT_DOWN
-		elif angle > 270 and angle < 330:
-			return Hexmap.EDGE.RIGHT_UP
+		return edge_from_angle(angle_to_coord(c))
+#		var angle = angle_to_coord(c)
+#		if (angle >= 330 and angle < 360) or (angle >= 0 and angle < 30):
+#			return Hexmap.EDGE.UP
+#		elif angle >= 30 and angle < 90:
+#			return Hexmap.EDGE.LEFT_UP
+#		elif angle >= 90 and angle < 150:
+#			return Hexmap.EDGE.LEFT_DOWN
+#		elif angle >= 150 and angle < 210:
+#			return Hexmap.EDGE.DOWN
+#		elif angle >= 210 and angle < 270:
+#			return Hexmap.EDGE.RIGHT_DOWN
+#		elif angle > 270 and angle < 330:
+#			return Hexmap.EDGE.RIGHT_UP
 	return -1
+
 
 func shift_to_edge(edge : int, ignore_blocked : bool = false) -> void:
 	if hexmap_node:

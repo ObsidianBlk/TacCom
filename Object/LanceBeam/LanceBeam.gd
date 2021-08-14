@@ -19,7 +19,7 @@ export var strike_area : Vector2 = Vector2(4,4)
 # -----------------------------------------------------------
 var _firing : bool = false
 var _beamCount : int = 0
-var _target : Vector2 = Vector2.ZERO
+var _target : Entity = null
 var _beams = {}
 
 onready var timer = get_node("Timer")
@@ -62,8 +62,10 @@ func _CreateBeam() -> void:
 		strike_area.x * 2 * randf(),
 		strike_area.y * 2 * randf()
 	)
+	
+	var to = _target.global_position - global_position
 	var beam = {
-		"to": _target + strike,
+		"to": to + strike,
 		"color": color
 	}
 	_beams[beam] = 0.2 + (0.5 * randf())
@@ -72,7 +74,7 @@ func _CreateBeam() -> void:
 # Public Methods
 # -----------------------------------------------------------
 
-func fire(target : Vector2, beam_count : int) -> void:
+func fire(target : Entity, beam_count : int) -> void:
 	if _firing:
 		return
 	

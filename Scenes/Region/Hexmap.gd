@@ -379,7 +379,7 @@ func get_simple_path(from : Vector2, to : Vector2) -> Array:
 	while frontier.size() > 0:
 		var cell = frontier.pop_back()
 		for e in EDGE.keys():
-			var next_cell = get_neighbor_coord(cell, EDGE[e])
+			var next_cell = get_neighbor_coord(cell, EDGE[e], true)
 			if not _GetCellInfo(next_cell, "blocked", false) and not next_cell in came_from:
 				frontier.push_back(next_cell)
 				came_from[next_cell] = cell
@@ -397,7 +397,7 @@ func get_simple_path(from : Vector2, to : Vector2) -> Array:
 func get_astar_path(from : Vector2, to : Vector2, min_weight : float = 1) -> Array:
 	var cells = []
 	var frontier = PriorityQueue.new()
-	frontier.put(from, 0)
+	frontier.put(0, from)
 	var came_from = {}
 	var cost = {}
 	came_from[from] = null
@@ -407,8 +407,8 @@ func get_astar_path(from : Vector2, to : Vector2, min_weight : float = 1) -> Arr
 		var cell = frontier.pop()
 		
 		for e in EDGE.keys():
-			var next_cell = get_neighbor_coord(cell, EDGE[e])
-			var blocked = _GetCellInfo(next_cell, "blocked", false)
+			var next_cell = get_neighbor_coord(cell, EDGE[e], true)
+			var blocked = false if next_cell == to else _GetCellInfo(next_cell, "blocked", false)
 			var new_cost = cost[cell] + max(_GetCellInfo(next_cell, "weight", min_weight), min_weight)
 			if not blocked and (not next_cell in cost or cost[next_cell] > new_cost):
 				cost[next_cell] = new_cost
@@ -417,7 +417,7 @@ func get_astar_path(from : Vector2, to : Vector2, min_weight : float = 1) -> Arr
 				came_from[next_cell] = cell
 				if next_cell == to:
 					frontier.clear()
-		
+	
 	var cur = to
 	while came_from[cur] != null:
 		cells.push_front(cur)

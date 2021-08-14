@@ -7,6 +7,7 @@ extends Control
 signal end_turn
 signal freelook(c)
 signal game_over(faction)
+signal pause
 
 
 enum PROCESS_STATE {FOCUS=0, PROCESS=1, END=2}
@@ -119,6 +120,13 @@ func _unhandled_input(event):
 		_next_ship()
 	if event.is_action_pressed("prev_ship", false):
 		_prev_ship()
+	if event.is_action_pressed("ui_cancel", false):
+		set_process(false)
+		set_process_input(false)
+		if showing_hud:
+			_on_toggle_hud()
+		emit_signal("pause")
+
 
 func _process(delta : float) -> void:
 	_proc_delay -= delta
@@ -309,6 +317,11 @@ func _on_process_turn() -> void:
 
 func _on_start_turn(fac : String) -> void:
 	if fac == faction and _ships.size() > 0:
+		if not _ships[_ship_idx].is_controllable():
+			if _FindOperableShip() == null:
+				emit_signal("game_over", faction)
+				return
+
 		in_turn = true
 		_focus_ship()
 		set_process_unhandled_input(true)
@@ -343,9 +356,11 @@ func _on_freelook_exit(c : Vector2, confirm : bool) -> void:
 				if region_node:
 					var ship : Ship = _ships[_ship_idx]
 					var ent = region_node.get_entity_at_coord(c)
-					var targetable = ent.is_physical()
-					if ent is Ship and ent.faction == faction:
-						targetable = false
+					var targetable = false
+					if ent:
+						targetable = ent.is_physical()
+						if ent is Ship and ent.faction == faction:
+							targetable = false
 					if not targetable or not ship.command("IonLance", c):
 						_SetVisToggle(false, "HBC/Info/IonLance/IonLance_BTN", "_on_IonLance_BTN_toggled")
 				else:

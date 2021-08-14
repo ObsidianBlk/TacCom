@@ -144,9 +144,17 @@ func _ready() -> void:
 		"structure":30,
 		"defense":[30,0,10]
 	}
-	fore_structure = ShipComponent.new(struct_info)
-	mid_structure = ShipComponent.new(struct_info)
-	aft_structure = ShipComponent.new(struct_info)
+	if construct_def != null:
+		var fsi = struct_info if not ("Hull" in construct_def) else construct_def.Hull.fore
+		var msi = struct_info if not ("Hull" in construct_def) else construct_def.Hull.mid
+		var asi = struct_info if not ("Hull" in construct_def) else construct_def.Hull.aft
+		fore_structure = ShipComponent.new(fsi)
+		mid_structure = ShipComponent.new(msi)
+		aft_structure = ShipComponent.new(asi)
+	else:
+		fore_structure = ShipComponent.new(struct_info)
+		mid_structure = ShipComponent.new(struct_info)
+		aft_structure = ShipComponent.new(struct_info)
 	mid_structure.connect_to(fore_structure, true)
 	mid_structure.connect_to(aft_structure, true)
 	
@@ -294,23 +302,48 @@ func is_powered() -> bool:
 func is_controllable() -> bool:
 	return commandable and powerable
 
+func is_facing(e : int) -> bool:
+	return e == facing_edge()
+
+func is_neighbor_edge_blocked(e : int) -> bool:
+	return hexmap_node.is_neighbor_coord_blocked(coord, e)
+
+func path_to_entity(e : Entity) -> Array:
+	return hexmap_node.get_astar_path(coord, e.coord)
+
 func long_range_sensors_enabled() -> bool:
 	return sensor_long > 0
 
+func get_entities_in_sensor_range() -> Array:
+	var entlist = []
+	var cells = hexmap_node.get_cells_at_distance_from_coord(coord, sensor_short + sensor_long)
+	for cell in cells:
+		var ent = hexmap_node.get_entity_at_coord(cell)
+		if ent != null:
+			entlist.append(ent)
+	return entlist
+
 func facing_edge() -> int:
-	if (facing >= 330 and facing < 360) or (facing >= 0 and facing < 30):
-		return Hexmap.EDGE.UP
-	elif facing >= 30 and facing < 90:
-		return Hexmap.EDGE.LEFT_UP
-	elif facing >= 90 and facing < 150:
-		return Hexmap.EDGE.LEFT_DOWN
-	elif facing >= 150 and facing < 210:
-		return Hexmap.EDGE.DOWN
-	elif facing >= 210 and facing < 270:
-		return Hexmap.EDGE.RIGHT_DOWN
-	elif facing > 270 and facing < 330:
-		return Hexmap.EDGE.RIGHT_UP
-	return -1
+	return edge_from_angle(facing)
+#	if (facing >= 330 and facing < 360) or (facing >= 0 and facing < 30):
+#		return Hexmap.EDGE.UP
+#	elif facing >= 30 and facing < 90:
+#		return Hexmap.EDGE.LEFT_UP
+#	elif facing >= 90 and facing < 150:
+#		return Hexmap.EDGE.LEFT_DOWN
+#	elif facing >= 150 and facing < 210:
+#		return Hexmap.EDGE.DOWN
+#	elif facing >= 210 and facing < 270:
+#		return Hexmap.EDGE.RIGHT_DOWN
+#	elif facing > 270 and facing < 330:
+#		return Hexmap.EDGE.RIGHT_UP
+#	return -1
+
+func forward_left_edge() -> int:
+	return edge_from_angle(_wrapRange(facing + 60, 0.0, 360.0))
+
+func forward_right_edge() -> int:
+	return edge_from_angle(_wrapRange(facing - 60, 0.0, 360.0))
 
 func relative_angle_to_entity(e : Entity) -> float:
 	var angle = angle_to_entity(e)
@@ -466,7 +499,7 @@ func _on_ionlance_attack(target : Vector2, dmg : float) -> void:
 	ent.damage(TacCom.DAMAGE_TYPE.ENERGY, dmg)
 	if lancebeam:
 		emit_signal("animating")
-		lancebeam.fire(ent.position - position, 3)
+		lancebeam.fire(ent, 3)
 
 func _on_long_range(long_radius : int) -> void:
 	sensor_state_changed = true
