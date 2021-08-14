@@ -15,9 +15,9 @@ onready var Ast_Node = preload("res://Object/Asteroid/Asteroid.tscn")
 
 func _ready() -> void:
 	Factions.register("TAC")
-	#Factions.register("COM")
+	Factions.register("COM")
 	#Factions.register("NEUTRAL")
-	#Factions.set_relation("TAC", "COM", -100, true)
+	Factions.set_relation("TAC", "COM", -100, true)
 	
 	connect("game_ready", self, "_on_game_ready")
 	if region != null:
@@ -132,7 +132,10 @@ func _on_game_ready() -> void:
 	emit_signal("start_turn", _factions[_fac_index])
 
 func _on_Player_game_over(faction):
-	print ("Faction ", faction, "Has lost the game!")
+	print ("Faction ", faction, " Has lost the game!")
+
+func _on_AI_game_over(faction):
+	print("AI Faction ", faction, " has lost the game!")
 
 func _on_end_turn():
 	if _factions.size() > 0:

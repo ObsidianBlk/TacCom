@@ -294,6 +294,9 @@ func is_powered() -> bool:
 func is_controllable() -> bool:
 	return commandable and powerable
 
+func long_range_sensors_enabled() -> bool:
+	return sensor_long > 0
+
 func facing_edge() -> int:
 	if (facing >= 330 and facing < 360) or (facing >= 0 and facing < 30):
 		return Hexmap.EDGE.UP
@@ -376,9 +379,12 @@ func belay(order : String) -> void:
 func process_turn() -> void:
 	var old_coord = coord
 	mid_structure.process_turn()
-	if enable_update_sensor_mask and (coord != old_coord or sensor_state_changed):
-		sensor_state_changed = false
-		update_sensor_mask()
+	if enable_update_sensor_mask:
+		if (coord != old_coord or sensor_state_changed):
+			sensor_state_changed = false
+			update_sensor_mask()
+	else:
+		sensor_state_changed = false # This becomes a default if we don't handle sensor masks
 
 func damage(type : int, amount : float, connection : String = "mid") -> void:
 	if amount > 0:

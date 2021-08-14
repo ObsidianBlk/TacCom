@@ -6,6 +6,7 @@
 [ext_resource path="res://Object/LanceBeam/LanceBeam.tscn" type="PackedScene" id=4]
 
 [sub_resource type="ShaderMaterial" id=1]
+resource_local_to_scene = true
 shader = ExtResource( 1 )
 shader_param/use_screen = false
 shader_param/alpha = 1.0

@@ -164,7 +164,10 @@ func create_map(img_src : String) -> void:
 							add_ship(ship)
 							ship.coord = Vector2(i,j)
 					MAP_COLOR_COM:
-						pass
+						var ship = TacCom.create_COM_ship()
+						if ship:
+							add_ship(ship)
+							ship.coord = Vector2(i,j)
 					MAP_COLOR_ASTEROID:
 						var ast = Ast_Node.instance()
 						if ast:
