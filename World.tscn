@@ -45,9 +45,13 @@ region_path = NodePath("../../Region")
 faction = "TAC"
 
 [connection signal="game_ready" from="." to="CanvasLayer/PlayerCTRL" method="_on_game_ready"]
+[connection signal="start_turn" from="." to="CanvasLayer/PlayerCTRL" method="_on_start_turn"]
 [connection signal="hexmap" from="Region" to="Region/Cursor" method="_on_hexmap"]
+[connection signal="ship_added" from="Region" to="CanvasLayer/PlayerCTRL" method="_on_ship_added"]
+[connection signal="ship_removed" from="Region" to="CanvasLayer/PlayerCTRL" method="_on_ship_removed"]
 [connection signal="ui_lock" from="Region" to="CanvasLayer/PlayerCTRL" method="_on_ui_lock"]
 [connection signal="ui_release" from="Region" to="CanvasLayer/PlayerCTRL" method="_on_ui_release"]
 [connection signal="freelook_exit" from="Region/Cursor" to="CanvasLayer/PlayerCTRL" method="_on_freelook_exit"]
+[connection signal="end_turn" from="CanvasLayer/PlayerCTRL" to="." method="_on_end_turn"]
 [connection signal="freelook" from="CanvasLayer/PlayerCTRL" to="Region/Cursor" method="_on_freelook"]
 [connection signal="game_over" from="CanvasLayer/PlayerCTRL" to="." method="_on_Player_game_over"]

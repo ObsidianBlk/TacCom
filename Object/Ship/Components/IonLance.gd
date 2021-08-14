@@ -74,6 +74,7 @@ func process_turn() -> void:
 		if _target_coord != null and _power_available >= _power_required:
 			emit_signal("attack", _target_coord, _dmg)
 			emit_signal("release_power")
+			_target_coord = null
 		
 		# TODO: Handle Crew!
 		

@@ -4,7 +4,7 @@ extends Control
 # -----------------------------------------------------------
 # Signals
 # -----------------------------------------------------------
-signal process_complete
+signal end_turn
 signal freelook(c)
 signal game_over(faction)
 
@@ -28,6 +28,7 @@ var region_node : Region = null
 var cur = null
 var queue = {}
 var showing_hud = false
+var in_turn = false
 
 var _freelook_mode = FREELOOK_MODE.NORMAL
 
@@ -89,6 +90,9 @@ func _set_faction(fac : String, force : bool = false) -> void:
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
+	set_process(false)
+	set_process_unhandled_input(false)
+	
 	_set_region_path(region_path)
 	power.visible = false
 	engines.visible = false
@@ -142,12 +146,13 @@ func _process(delta : float) -> void:
 				_proc_idx = -1
 				set_process(false)
 				_unfocus_ship()
+				in_turn = false
 				ship = _FindOperableShip()
 				if ship != null:
-					_focus_ship()
+					#_focus_ship()
 					#region_node.set_target_node(ship)
-					set_process_unhandled_input(true)
-					emit_signal("process_complete")
+					#set_process_unhandled_input(true)
+					emit_signal("end_turn")
 				else:
 					emit_signal("game_over", faction)
 
@@ -174,15 +179,15 @@ func _FindOperableShip(dir : int = 1) -> Ship:
 	return ship
 
 
-func _freelook(mode : int) -> void:
+func _freelook(mode : int, cursor_mode : int = TacCom.CURSOR_MODE.LOOK) -> void:
 	_freelook_mode = mode
 	set_process_unhandled_input(false)
 	if showing_hud:
 		_on_toggle_hud()
 	if _ship_idx >= 0:
-		emit_signal("freelook", _ships[_ship_idx].coord)
+		emit_signal("freelook", _ships[_ship_idx].coord, cursor_mode)
 	else:
-		emit_signal("freelook", Vector2.ZERO)
+		emit_signal("freelook", Vector2.ZERO, cursor_mode)
 
 func _next_ship() -> void:
 	if _ship_idx >= 0:
@@ -276,14 +281,16 @@ func _on_game_ready() -> void:
 	_set_faction(faction, true)
 
 func _on_ui_lock() -> void:
-	set_process_unhandled_input(false)
-	set_process(false)
+	if in_turn:
+		set_process_unhandled_input(false)
+		set_process(false)
 
 func _on_ui_release() -> void:
-	if _proc_idx >= 0:
-		set_process(true)
-	else:
-		set_process_unhandled_input(true)
+	if in_turn:
+		if _proc_idx >= 0:
+			set_process(true)
+		else:
+			set_process_unhandled_input(true)
 
 
 func _on_process_turn() -> void:
@@ -299,6 +306,12 @@ func _on_process_turn() -> void:
 		#_SetVisToggle(false, "HBC/Info/Commands/Buttons/Lasers_BTN", "_on_Lasers_BTN_toggled")
 		set_process_unhandled_input(false)
 		set_process(true)
+
+func _on_start_turn(fac : String) -> void:
+	if fac == faction and _ships.size() > 0:
+		in_turn = true
+		_focus_ship()
+		set_process_unhandled_input(true)
 
 func _on_freelook_exit(c : Vector2, confirm : bool) -> void:
 	if not showing_hud:
@@ -327,7 +340,16 @@ func _on_freelook_exit(c : Vector2, confirm : bool) -> void:
 				_SetVisToggle(false, "HBC/Info/Maneuver/Manuvers_BTN", "_on_Manuvers_BTN_toggled")
 		FREELOOK_MODE.IONLANCE:
 			if confirm:
-				pass
+				if region_node:
+					var ship : Ship = _ships[_ship_idx]
+					var ent = region_node.get_entity_at_coord(c)
+					var targetable = ent.is_physical()
+					if ent is Ship and ent.faction == faction:
+						targetable = false
+					if not targetable or not ship.command("IonLance", c):
+						_SetVisToggle(false, "HBC/Info/IonLance/IonLance_BTN", "_on_IonLance_BTN_toggled")
+				else:
+					_SetVisToggle(false, "HBC/Info/IonLance/IonLance_BTN", "_on_IonLance_BTN_toggled")
 			else:
 				_SetVisToggle(false, "HBC/Info/IonLance/IonLance_BTN", "_on_IonLance_BTN_toggled")
 	set_process_unhandled_input(true)
@@ -342,6 +364,15 @@ func _on_ship_added(ship : Ship):
 		if _ship_idx < 0:
 			_ship_idx = 0
 			_focus_ship()
+
+func _on_ship_removed(ship : Ship):
+	for i in range(_ships.size()):
+		if _ships[i] == ship:
+			_ships.remove(i)
+			if _ships.size() > 0:
+				_ship_idx = 0
+				_focus_ship()
+			break
 
 
 func _on_toggle_hud() -> void:
@@ -446,7 +477,7 @@ func _on_ordered(ordered : bool, comp : String) -> void:
 		"Sensors":
 			_SetVisToggle(ordered, "HBC/Info/Sensors/Sensors_BTN", "_on_Sensors_BTN_toggled")
 		"IonLance":
-			_SetVisToggle(ordered, "HBC/Info/Sensors/IonLance_BTN", "_on_IonLance_BTN_toggled")
+			_SetVisToggle(ordered, "HBC/Info/IonLance/IonLance_BTN", "_on_IonLance_BTN_toggled")
 
 func _on_commands_change(available : int, total : int) -> void:
 	if command:
@@ -520,6 +551,6 @@ func _on_IonLance_BTN_toggled(button_pressed):
 			var fo = get_focus_owner()
 			if fo:
 				fo.release_focus()
-			_freelook(FREELOOK_MODE.IONLANCE)
+			_freelook(FREELOOK_MODE.IONLANCE, TacCom.CURSOR_MODE.TARGET)
 		else:
 			ship.belay("IonLance")

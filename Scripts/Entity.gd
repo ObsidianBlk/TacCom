@@ -75,6 +75,9 @@ func clear_hexmap() -> void:
 		hexmap_node.disconnect("masking_changed", self, "_on_masking_changed")
 	hexmap_node = null
 
+func is_physical() -> bool:
+	return _blocking
+
 func angle_to_entity(e : Entity) -> float:
 	return 360 - _wrapRange(rad2deg(position.angle_to_point(e.position)) -90.0, 0.0, 360.0)
 

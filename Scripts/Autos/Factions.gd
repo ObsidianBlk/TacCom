@@ -13,7 +13,7 @@ func register(faction_name : String) -> void:
 func get_list() -> Array:
 	return _factions.keys()
 
-func exits(faction_name : String) -> bool:
+func exists(faction_name : String) -> bool:
 	return faction_name in _factions
 
 func set_relation(faction_A : String, faction_B : String, relation : int, mutual : bool = false) -> void:

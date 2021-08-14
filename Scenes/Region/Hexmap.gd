@@ -130,6 +130,9 @@ func _GetCellInfo(coord : Vector2, property : String, default_value = null):
 			return _cell_info[key][property]
 	return default_value
 
+func _ClearAllCellInfo() -> void:
+	_cell_info = {}
+
 func _AssignColorToSprite(sprite : Sprite, color : Color, z : int = 0) -> void:
 	var mat = sprite.material
 	var color_alias = Color(color.r * 0.6, color.g * 0.6, color.b * 0.6, 0.4)
@@ -430,6 +433,12 @@ func get_entity_at_coord(coord : Vector2):
 	if parent and parent.has_method("get_entity_at_coord"):
 		return parent.get_entity_at_coord(coord)
 	return null
+
+
+func reset_map() -> void:
+	clear_highlights()
+	clear_mask()
+	_ClearAllCellInfo()
 
 func map_to_world(c : int, r : int) -> Vector2:
 	var x = float(c) * hex_offset.x

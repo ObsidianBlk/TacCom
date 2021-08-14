@@ -24,12 +24,16 @@ func _ready() -> void:
 func damage(type : int, amount : float) -> void:
 	if type == TacCom.DAMAGE_TYPE.KINETIC:
 		_HP -= amount
-		if _HP <= 0:
-			if visible and explosion:
-				emit_signal("animating")
-				explosion.boom()
-			else:
-				_on_damage_anim_complete()
+	if type == TacCom.DAMAGE_TYPE.ENERGY:
+		_HP -= amount * 0.5
+	
+	print("Asteroid HP: ", _HP)
+	if _HP <= 0:
+		if visible and explosion:
+			emit_signal("animating")
+			explosion.boom()
+		else:
+			_on_damage_anim_complete()
 
 
 func collision_damage() -> float:

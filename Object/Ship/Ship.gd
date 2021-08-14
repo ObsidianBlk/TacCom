@@ -66,6 +66,7 @@ var sensor_mask_cells = []
 # -----------------------------------------------------------
 
 onready var explosion = get_node("Explosion")
+onready var lancebeam = get_node("LanceBeam")
 
 # -----------------------------------------------------------
 # Setters/Getters
@@ -122,8 +123,11 @@ func set_facing(f : float) -> void:
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
+	_blocking = true
 	if explosion:
 		explosion.connect("boom_over", self, "_on_anim_complete")
+	if lancebeam:
+		lancebeam.connect("pew_over", self, "_on_anim_complete")
 		
 	sprite = get_node("Sprite")
 	if sprite:
@@ -452,7 +456,11 @@ func _on_maneuver(degrees : float) -> void:
 	set_facing(facing + degrees)
 
 func _on_ionlance_attack(target : Vector2, dmg : float) -> void:
-	pass
+	var ent = hexmap_node.get_entity_at_coord(target)
+	ent.damage(TacCom.DAMAGE_TYPE.ENERGY, dmg)
+	if lancebeam:
+		emit_signal("animating")
+		lancebeam.fire(ent.position - position, 3)
 
 func _on_long_range(long_radius : int) -> void:
 	sensor_state_changed = true

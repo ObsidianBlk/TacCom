@@ -10,9 +10,8 @@ signal freelook_exit(c, confirm)
 # Variables
 # -----------------------------------------------------------
 
-export var color : Color = Color(1, 0.5, 0)				setget _set_color
-export (Hexmap.EDGE) var edge : int = Hexmap.EDGE.UP	setget _set_edge
-export var all_edges : bool = true						setget _set_all_edges
+export var main_color : Color = Color(0, 0.5, 1)				setget _set_main_color
+export var hair_color : Color = Color(1, 0.5, 0)				setget _set_hair_color
 
 
 onready var sprite_hex = get_node("Sprite_Hex")
@@ -21,26 +20,19 @@ onready var sprite_hair = get_node("Sprite_Hair")
 # -----------------------------------------------------------
 # Setters/Getters
 # -----------------------------------------------------------
-func _set_color(c : Color) -> void:
-	color = c
-	_UpdateColorAndEdge()
+func _set_main_color(c : Color) -> void:
+	main_color = c
+	_UpdateColors()
 
-func _set_edge(e : int) -> void:
-	for i in Hexmap.EDGE.keys():
-		if Hexmap.EDGE[i] == e:
-			edge = e
-			_UpdateColorAndEdge()
-			break
-
-func _set_all_edges(e : bool) -> void:
-	all_edges = e
-	_UpdateColorAndEdge()
+func _set_hair_color(c : Color) -> void:
+	hair_color = c
+	_UpdateColors()
 
 # -----------------------------------------------------------
 # Override Methods
 # -----------------------------------------------------------
 func _ready() -> void:
-	_set_color(color)
+	_UpdateColors()
 	visible = false
 	set_process_unhandled_input(false)
 
@@ -69,16 +61,40 @@ func _unhandled_input(event):
 # -----------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------
-func _UpdateColorAndEdge() -> void:
+func _UpdateColors() -> void:
 	if not sprite_hex or not sprite_hair:
 		return
-	var c = color if all_edges else Color(1,1,1,0)
+
 	var mathex = sprite_hex.material
 	var mathair = sprite_hair.material
-	for e in Hexmap.EDGE.keys():
-		var i = Hexmap.EDGE[e]
-		mathex.set_shader_param("color_%s_to"%[i+1], color if i == edge else c)
-		mathair.set_shader_param("color_%s_to"%[i+1], c)
+	
+	var main_alt_color = Color(
+		main_color.r * 0.6,
+		main_color.g * 0.6,
+		main_color.b * 0.6,
+		main_color.a
+	)
+	
+	var hair_alt_color = Color(
+		hair_color.r * 0.6,
+		hair_color.g * 0.6,
+		hair_color.b * 0.6,
+		hair_color.a
+	)
+	
+	var hair_alt2_color = Color(
+		hair_color.r * 0.8,
+		hair_color.g * 0.8,
+		hair_color.b * 0.8,
+		hair_color.a
+	)
+	
+	mathex.set_shader_param("color_1_to", main_color)
+	mathex.set_shader_param("color_2_to", main_alt_color)
+	
+	mathair.set_shader_param("color_1_to", hair_color)
+	mathair.set_shader_param("color_2_to", hair_alt_color)
+	mathair.set_shader_param("color_3_to", hair_alt2_color)
 
 
 # -----------------------------------------------------------
@@ -89,9 +105,15 @@ func _UpdateColorAndEdge() -> void:
 # -----------------------------------------------------------
 # Handler Methods
 # -----------------------------------------------------------
-func _on_freelook(c : Vector2) -> void:
+func _on_freelook(c : Vector2, mode : int = TacCom.CURSOR_MODE.LOOK) -> void:
 	set_coord(c)
 	set_process_unhandled_input(true)
+	if mode == TacCom.CURSOR_MODE.LOOK:
+		if sprite_hair:
+			sprite_hair.visible = false
+	elif mode == TacCom.CURSOR_MODE.TARGET:
+		if sprite_hair:
+			sprite_hair.visible = true
 	visible = true
 	var parent = get_parent()
 	if parent is Region:

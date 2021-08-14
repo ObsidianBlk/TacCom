@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://Shaders/Fragment/colorswap.shader" type="Shader" id=1]
 [ext_resource path="res://Object/Explosion/Explosion.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Object/Ship/Ship.gd" type="Script" id=3]
+[ext_resource path="res://Object/LanceBeam/LanceBeam.tscn" type="PackedScene" id=4]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 1 )
@@ -39,3 +40,6 @@ region_enabled = true
 region_rect = Rect2( 0, 0, 16, 16 )
 
 [node name="Explosion" parent="." instance=ExtResource( 2 )]
+
+[node name="LanceBeam" parent="." instance=ExtResource( 4 )]
+offset = Vector2( 0, -9 )

@@ -13,6 +13,12 @@ signal ship_removed(ship)
 signal ui_lock
 signal ui_release
 
+
+
+const MAP_COLOR_TAC = Color(0,1,0)
+const MAP_COLOR_COM = Color(1,0,0)
+const MAP_COLOR_ASTEROID = Color("#404040")
+
 # -----------------------------------------------------------
 # Export Variables
 # -----------------------------------------------------------
@@ -27,6 +33,9 @@ var _target : Node2D = null
 # -----------------------------------------------------------
 # Onready Variables
 # -----------------------------------------------------------
+onready var Ast_Node = preload("res://Object/Asteroid/Asteroid.tscn")
+
+
 onready var hexmap_node : Hexmap = get_node("Hexmap")
 onready var camera_node : Camera2D = get_node("Camera")
 
@@ -85,6 +94,7 @@ func _remove_entity(ent : Entity, ent_container : Node2D, signal_name : String =
 		ent.clear_hexmap()
 		if signal_name != "":
 			emit_signal(signal_name, ent)
+		ent.queue_free()
 
 # -----------------------------------------------------------
 # Methods
@@ -130,6 +140,37 @@ func get_entity_at_coord(coord : Vector2):
 			if child.coord == coord:
 				return child
 	return null
+
+
+func create_map(img_src : String) -> void:
+	if not hexmap_node:
+		return
+	
+	var image : Image = Image.new()
+	if image.load(img_src) == OK:
+		var w = image.get_width()
+		var h = image.get_height()
+		hexmap_node.reset_map()
+		hexmap_node.bounds = Rect2(0, 0, w, h)
+		
+		image.lock()
+		for i in range(w):
+			for j in range(h):
+				var color = image.get_pixel(i, j)
+				match color:
+					MAP_COLOR_TAC:
+						var ship = TacCom.create_TAC_ship()
+						if ship:
+							add_ship(ship)
+							ship.coord = Vector2(i,j)
+					MAP_COLOR_COM:
+						pass
+					MAP_COLOR_ASTEROID:
+						var ast = Ast_Node.instance()
+						if ast:
+							add_env(ast)
+							ast.coord = Vector2(i,j)
+		image.unlock()
 
 # -----------------------------------------------------------
 # Handler Methods
