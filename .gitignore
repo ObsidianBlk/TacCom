@@ -6,6 +6,7 @@ export_presets.cfg
 
 # Hiding the music for the game at present...
 Assets/Audio/Music/*.ogg
+Assets/Audio/Music/*.ogg.import
 
 # Release folder
 Releases/*
